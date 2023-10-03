@@ -11,7 +11,7 @@ Must be simple to start with and not trap people by default!
 Must be powerfull enough to not require extra tooling if it's easier, be it
 * bash's number formatting trick `$(([##7]v))` for format the variable v in base 7 for instance
 * printf's decimal formatting
-* coloring
+* escape sequences or tput coloring
 
 I'm tired of looking up color codes and have unreadable color escape sequences.
 
@@ -27,33 +27,46 @@ https://github.com/ununhexium/configfiles/blob/master/.local/scripts/cecho2
 
 https://github.com/ununhexium/configfiles/blob/master/.local/scripts/bases
 
-I don't want to start a real scripting language, or even worse the JVM: to highlight a few lines of output.
+I don't want to start a real scripting language, or even worse: the JVM, to highlight a few lines of output in a bash script.
 
 It may as well be comprehensive so there's 1 tool that gives access to all of the shell's printing capabilities if the format string remains terse.
 I'm likely engaging on a slippery slope but we'll see if it's possible.
 
+I don't want to import and redeclare the colors each time I use them. This should be done once and for all.
+
+https://stackoverflow.com/questions/5412761/using-colors-with-printf
+
+
 
 ### Limitation is current tools
 
-Mix of bash's base formatting, sprintf's decimal formatting, echo workarounds, escape sequences or tput, 
+Mix of bash's base formatting, sprintf's decimal formatting, echo workarounds, escape sequences or tput, alternative tool that auto-color based on various criteria
+
+### Alternatives?
+
+TODO: is there anything that comes close to this?
 
 ## Implemented
 
-Spec drafts
+Spec draft
 
 ## Goals
 
-echo splits the options with `--` what comes before are the options, what comes later are the items to be printed
+No `-` `--` `-n` `-e` etc. ambiguity as in `echo`
 
-no `-` `--` `-n` `-e` etc. ambiguity.
+No `%x` and other random characters like in `printf`
 
-must support color
+No looking up for color code indexes nor figuring out which option ins corerct like in tput.
 
-must have an optional formatting string
+Use full english nouns but allow existing styles for easy migration form those tools.
+
+Support color.
+
+Optional formatting string. I must not need to guess what format I need if I only want to print.
 
 Fast! Like a native binary.
 
-Format support a la printf but with modern format specifiers: 
+Format support à la printf but with modern format specifiers: 
  * positional `{}`
  * indexed `{1}`
  * named `{foo}`
@@ -62,8 +75,8 @@ Format support a la printf but with modern format specifiers:
  * reset to default after printing? `{@red@}` or auto reset? 🤔
  * any color `{#A03472}`
  * backgroud colors `{@white/red}`
- * Styles: bold, italic, blink `{!bold}`
- * Position on screen
+ * Styles: bold, italic, blinki, reset, ... `{!bold}`
+ * Position on screen `{@5,10}`
 
 ## Examples
 
@@ -121,7 +134,7 @@ b
 c
 ```
 
-### Positional arguments
+### Indexed arguments
 
 ```bash
 cecho '{3}-{2}={1}' a b c
@@ -132,6 +145,7 @@ cecho '{3}-{2}={1}' a b c
 ### Decimal formatting
 
 TODO: is there another readily available program that could do the number formatting and let me not re-implement the wheel?
+
 Leave this to `printf` ?
 
 ```bash
@@ -146,8 +160,10 @@ https://alvinalexander.com/programming/printf-format-cheat-sheet/
 
 ### Base-X
 
-```bash
+TODO
 
+```bash
+{}
 ```
 
 ### Extra opt-in features
@@ -157,7 +173,7 @@ These will break the features above and must be selected explicitly
 #### Named arguments
 
 ```bash
-cecho '{!named}{foo} and {bar}' --foo=A --bar=B
+cecho '{?named}{foo} and {bar}' --foo=A --bar=B
 ```
 
 `A and B`
@@ -177,26 +193,26 @@ This one may become unmanageable but let's see if it's possible anyway.
 It recursively evaluates the arguments 1 by 1, modifying the format at each evaluation.
 
 ```bash
-cecho '{!recurse}' '{!named}{foo}' --foo='{03.5@blue}' '3.14159265359'
+cecho '{?recurse}' '{?named}{foo}' --foo='{03.5@blue}' '3.14159265359'
 ```
 
 Step by step this is equivalent to
 
 ```bash
-cecho '{!recurse}{!named}{foo}' --foo='{03.5@blue}' '3.14159265359'
+cecho '{!recurse}{?named}{foo}' --foo='{03.5@blue}' '3.14159265359'
 ```
 
 ```bash
-cecho '{!recurse}{!named}{03.5@blue}' '3.14159265359'
+cecho '{!recurse}{?named}{03.5@blue}' '3.14159265359'
 ```
 
 ```bash
-cecho '{!recurse}{!named}3.14159'
+cecho '{!recurse}{?named}3.14159'
 ```
 
 TODO: distinguish indexed argument from number formatting.
 
-<span style="color:'blue'"> `3.14159` </span>
+<span style="color:'blue'"> `003.14159` </span>
 
 
 ## Format specifiers brainstorming
@@ -211,12 +227,13 @@ Format types:
 * Number format `%`
 * Color `#`
 * Position `@`
-* Options and style `!`
+* Style `!`
+* Option `?`
 
 
 
 ```bash
-cecho '{!named}{foo@2,3#r%1.2!bold}' --foo=3.1415
+cecho '{?named}{foo@2,3#r%1.2!bold}' --foo=3.1415
 ```
 
 Shows the content of foo, at the cursor row 2 column 3, in red, with 2 decimals, in bold.
@@ -295,10 +312,17 @@ TODO: what if the terminal only supports 8 colors? Find the closest color that m
 
 Support relative movement?
 
+### Styles
+
+`!style`
+
 ### Options
 
-`!option`
+Similar to regex options `(?=...)`
+
+`?option`
 
 ## TODOs
 
 What formatting style to use? Python? Rust? C?
+
