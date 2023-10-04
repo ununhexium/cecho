@@ -63,8 +63,9 @@ fn parse_in_default_mode<'a, 'b>(chars: &'a mut Chars<'a>) -> Vec<Spec> {
                 if escaped {
                     so_far.push(c);
                     escaped = false;
+                } else {
+                    escaped = true;
                 }
-                escaped = true;
             }
             _ => {
                 so_far.push(c);
@@ -85,7 +86,6 @@ fn parse_in_default_mode<'a, 'b>(chars: &'a mut Chars<'a>) -> Vec<Spec> {
 
 fn parse_as_spec<'a, 'b>(chars: &mut Chars) -> Vec<Spec> {
     let mut specs: Vec<Spec> = Vec::new();
-    let mut escaped = false;
 
     while let Some(c) = chars.next() {
         match c {
@@ -94,17 +94,11 @@ fn parse_as_spec<'a, 'b>(chars: &mut Chars) -> Vec<Spec> {
             }
             '}' => {
                 specs.push(Spec::Positional);
-                break
-            }
-            '\\' => {
-                escaped = true
+                break;
             }
             _ => {
                 todo!()
             }
-        }
-        if c != '\\' {
-            escaped = false;
         }
     }
 
@@ -113,7 +107,7 @@ fn parse_as_spec<'a, 'b>(chars: &mut Chars) -> Vec<Spec> {
 
 #[cfg(test)]
 mod tests {
-    use crate::lib::{cecho, parse_in_default_mode, Spec};
+    use crate::{cecho, parse_in_default_mode, Spec};
 
     macro_rules! vecs {
         ($($x:expr),*) => (vec![$($x.to_string()),*]);
@@ -145,7 +139,7 @@ mod tests {
     }
 
     #[test]
-    fn when_a_format_is_specified_then_use_it__0_spec() {
+    fn when_a_format_is_specified_then_use_it_0_spec() {
         let i = vecs!(
             r#"Just raw text, nothing special, no placeholder like \{\}"#,
             "this will be ignored because the format contains no formatting specifier"
@@ -155,7 +149,7 @@ mod tests {
     }
 
     #[test]
-    fn when_a_format_is_specified_then_use_it__2_specs() {
+    fn when_a_format_is_specified_then_use_it_2_specs() {
         let i = vecs!("{} and {}", "A", "B");
         let actual = cecho(i);
         assert_eq!(actual.ok(), Some("A and B".to_string()));

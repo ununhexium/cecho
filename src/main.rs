@@ -1,14 +1,12 @@
 use std::env;
-use std::fmt::format;
-
-mod lib;
+use cecho::cecho;
 
 fn main() {
     let mut arguments: Vec<String> = Vec::new();
     for a in env::args().skip(1) /* skip the process name */ {
         arguments.push(a)
     }
-    let result = lib::cecho(arguments);
+    let result = cecho(arguments);
 
     match result {
         Err(m) => {
