@@ -48,7 +48,24 @@ TODO: is there anything that comes close to this?
 
 ## Implemented
 
-Spec draft
+Spec draft v0.1
+
+### Print any string by omitting the format
+
+```bash
+cecho '' 'Whatever you want here!'
+```
+
+`Whatever you want here!`
+
+### Print multiple strings by omitting the format
+
+```bash
+cecho '' 'Whatever you want here,' ' and there,' ' and some more..'
+```
+
+`Whatever you want here, and there, and some more...`
+
 
 ## Goals
 
@@ -71,32 +88,16 @@ Format support à la printf but with modern format specifiers:
  * indexed `{1}`
  * named `{foo}`
  * number formatting `{1.5}`
- * simple colors `{@red}`
- * reset to default after printing? `{@red@}` or auto reset? 🤔
+ * simple colors `{#red}`
+ * reset to default after printing? `{#red!preserve}` or auto reset? 🤔
  * any color `{#A03472}`
- * backgroud colors `{@white/red}`
+ * backgroud colors `{#white/red}`
  * Styles: bold, italic, blinki, reset, ... `{!bold}`
  * Position on screen `{@5,10}`
 
 ## Examples
 
 The quoting and escaping in these examples is assuming that you write these command in a `sh`-like shell.
-
-### Print any string by omitting the format
-
-```bash
-cecho '' 'Whatever you want here!'
-```
-
-`Whatever you want here!`
-
-### Print multiple strings by omitting the format
-
-```bash
-cecho '' 'Whatever you want here,' ' and there,' ' and some more..'
-```
-
-`Whatever you want here, and there, and some more...`
 
 ### Specify a format
 
@@ -238,9 +239,9 @@ cecho '{?named}{foo@2,3#r%1.2!bold}' --foo=3.1415
 
 Shows the content of foo, at the cursor row 2 column 3, in red, with 2 decimals, in bold.
 
-<b style="color:red;">
-`3.14`
-</b>
+<pre>
+<b style="color:red;">3.14</b>
+</pre>
 
 ### Name
 
