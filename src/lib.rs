@@ -2,27 +2,36 @@ use std::str::Chars;
 use itertools;
 use itertools::Itertools;
 
-pub fn cecho(inputs: Vec<String>) -> Result<String, &'static str> {
+pub fn cecho(inputs: Vec<String>) -> Result<String, String> {
     // TODO matcher
     if inputs.len() < 2 {
-        Err("The minimum number of arguments is 2. The first argument is the format. If no formatting is necessary, use an empty string.")
+        Err("The minimum number of arguments is 2. The first argument is the format. If no formatting is necessary, use an empty string.".to_string())
     } else if inputs[0].is_empty() {
         let mut result = inputs[1].to_string();
         inputs.iter().skip(2).for_each(|s| result.push_str(s));
         Ok(result)
     } else {
         let parsed = parse_format(&inputs[0]);
-        let mut position = 0;
-        let result = parsed.iter().map(|s|
-            match s {
-                Spec::Litteral(l) => { l }
-                Spec::Positional => {
-                    position += 1;
-                    &inputs[position]
-                }
+
+        match parsed {
+            Err(m) => Err(m.to_string()),
+            Ok(specs) => {
+                let mut position = 0;
+                let result = specs.iter().map(|s|
+                    match s {
+                        Spec::Litteral(l) => { l }
+                        Spec::Positional => {
+                            position += 1;
+                            &inputs[position]
+                        }
+                        Spec::Indexed(i) => {
+                            &inputs[*i]
+                        }
+                    }
+                ).join("");
+                Ok(result)
             }
-        ).join("");
-        Ok(result)
+        }
     }
 }
 
@@ -31,19 +40,14 @@ pub fn cecho(inputs: Vec<String>) -> Result<String, &'static str> {
 enum Spec {
     Litteral(String),
     Positional,
+    Indexed(usize),
 }
 
-fn parse_format(format: &String) -> Vec<Spec> {
-    let mut specs: Vec<Spec> = Vec::new();
-
-    specs.extend(
-        parse_in_default_mode(&mut format.chars())
-    );
-
-    specs
+fn parse_format(format: &String) -> Result<Vec<Spec>, String> {
+    return parse_in_default_mode(&mut format.chars());
 }
 
-fn parse_in_default_mode<'a, 'b>(chars: &'a mut Chars<'a>) -> Vec<Spec> {
+fn parse_in_default_mode<'a, 'b>(chars: &'a mut Chars<'a>) -> Result<Vec<Spec>, String> {
     let mut specs: Vec<Spec> = Vec::new();
     let mut escaped = false;
     let mut so_far = String::new();
@@ -56,7 +60,11 @@ fn parse_in_default_mode<'a, 'b>(chars: &'a mut Chars<'a>) -> Vec<Spec> {
                 } else {
                     specs.push(Spec::Litteral(so_far.to_string()));
                     so_far = String::new();
-                    specs.extend(parse_as_spec(chars));
+                    let next = parse_in_spec_mode(chars);
+                    match next {
+                        Err(e) => return Err(e),
+                        Ok(it) => specs.push(it),
+                    }
                 }
             }
             '\\' => {
@@ -81,33 +89,40 @@ fn parse_in_default_mode<'a, 'b>(chars: &'a mut Chars<'a>) -> Vec<Spec> {
         specs.push(Spec::Litteral(so_far.to_string()));
     }
 
-    specs
+    Ok(specs)
 }
 
-fn parse_as_spec<'a, 'b>(chars: &mut Chars) -> Vec<Spec> {
-    let mut specs: Vec<Spec> = Vec::new();
+fn parse_in_spec_mode<'a, 'b>(chars: &mut Chars) -> Result<Spec, String> {
+    let mut so_far = String::new();
 
     while let Some(c) = chars.next() {
         match c {
             '{' => {
-                panic!("Nested specifiers are not supported")
+                return Err("Can't nest specifiers".to_string());
             }
             '}' => {
-                specs.push(Spec::Positional);
-                break;
+                return match so_far.as_ref() {
+                    "" => {
+                        Ok(Spec::Positional)
+                    }
+                    _ => {
+                        let index = so_far.parse::<i32>().unwrap();
+                        Ok(Spec::Indexed(index as usize))
+                    }
+                };
             }
             _ => {
-                todo!()
+                so_far.push(c);
             }
         }
     }
 
-    specs
+    Err("The specifiers are imbalanced: missing }".to_string())
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{cecho, parse_in_default_mode, Spec};
+    use crate::{cecho, parse_in_spec_mode, parse_in_default_mode, Spec};
 
     macro_rules! vecs {
         ($($x:expr),*) => (vec![$($x.to_string()),*]);
@@ -120,7 +135,7 @@ mod tests {
 
         assert_eq!(
             actual.err(),
-            Some("The minimum number of arguments is 2. The first argument is the format. If no formatting is necessary, use an empty string.")
+            Some("The minimum number of arguments is 2. The first argument is the format. If no formatting is necessary, use an empty string.".to_string())
         )
     }
 
@@ -156,30 +171,65 @@ mod tests {
     }
 
     // TODO detect invalid cases:
-    // {{}}
     // {garbage value}
-    // unbalanced {
     // TODO refuse to mix positional, indexed and named, only 1 of each
 
     #[test]
     fn parse_a_string_that_contains_no_spec_in_default_mode() {
         let specs = parse_in_default_mode(&mut "Hello, format!".to_string().chars());
-        assert_eq!(specs.len(), 1);
-        assert_eq!(specs[0], Spec::Litteral("Hello, format!".to_string()));
+        let ok = specs.ok().unwrap();
+        assert_eq!(ok.len(), 1);
+        assert_eq!(ok[0], Spec::Litteral("Hello, format!".to_string()));
     }
 
     #[test]
     fn parse_a_string_that_contains_no_spec_but_special_chars_in_default_mode() {
         let specs = parse_in_default_mode(&mut r#"Look at those dirty chars: \{ \\ \}"#.to_string().chars());
-        assert_eq!(specs.len(), 1);
-        assert_eq!(specs[0], Spec::Litteral(r#"Look at those dirty chars: { \ }"#.to_string()));
+        let ok = specs.ok().unwrap();
+        assert_eq!(ok.len(), 1);
+        assert_eq!(ok[0], Spec::Litteral(r#"Look at those dirty chars: { \ }"#.to_string()));
     }
 
     #[test]
     fn parse_a_string_that_contains_1_spec_in_default_mode() {
         let specs = parse_in_default_mode(&mut "Spec={}".to_string().chars());
-        assert_eq!(specs.len(), 2);
-        assert_eq!(specs[0], Spec::Litteral("Spec=".to_string()));
-        assert_eq!(specs[1], Spec::Positional);
+        let ok = specs.ok().unwrap();
+        assert_eq!(ok.len(), 2);
+        assert_eq!(ok[0], Spec::Litteral("Spec=".to_string()));
+        assert_eq!(ok[1], Spec::Positional);
     }
+
+    #[test]
+    fn parse_a_nested_format() {
+        let specs = parse_in_default_mode(&mut "Whatever {{}".to_string().chars());
+        let err = specs.err().unwrap();
+        // TODO: improvement: tell the char that caused the issue
+        assert_eq!(err, "Can't nest specifiers".to_string());
+    }
+
+    #[test]
+    fn parse_an_imbalanced_format() {
+        let specs = parse_in_default_mode(&mut "Imbalanced {".to_string().chars());
+        let err = specs.err().unwrap();
+        // TODO: improvement: tell the char that caused the issue
+        assert_eq!(err, "The specifiers are imbalanced: missing }".to_string());
+    }
+
+    // TODO: warn about extra arguments? pedantic mode?
+
+    #[test]
+    fn parse_a_single_digit_index_spec() {
+        let specs = parse_in_spec_mode(&mut "8}".to_string().chars());
+        let ok = specs.ok().unwrap();
+        assert_eq!(ok, Spec::Indexed(8));
+    }
+
+    #[test]
+    fn parse_a_large_index_spec() {
+        let specs = parse_in_spec_mode(&mut "116}".to_string().chars());
+        let ok = specs.ok().unwrap();
+        assert_eq!(ok, Spec::Indexed(116));
+    }
+
+    // TODO: spec special chars escape \% \# \\ \? \! ...
 }

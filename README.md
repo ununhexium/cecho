@@ -74,6 +74,36 @@ cecho '{}+{}={}' 1 2 3
 
 `1+2=3`
 
+### Print just brackets
+
+```bash
+cecho '{}' '{}'
+```
+
+`{}`
+
+### Literal brackets
+
+```bash
+cecho '\{{}\}' 'value'
+```
+
+`{value}`
+
+### Indexed arguments
+
+```bash
+cecho '{3}-{2}={1}' a b c
+```
+
+`c-b=a`
+
+
+```bash
+cecho '{3} {2} {1} {2} {3}' 1 2 3
+```
+
+`3 2 1 2 3`
 
 
 ## Goals
@@ -108,22 +138,6 @@ Format support à la printf but with modern format specifiers:
 
 The quoting and escaping in these examples is assuming that you write these command in a `sh`-like shell.
 
-### Print just brackets
-
-```bash
-cecho '{}' '{}'
-```
-
-`{}`
-
-### Litteral brackets
-
-```bash
-cecho '\{{}\}' 'value'
-```
-
-`{value}`
-
 ### New lines
 
 ```bash
@@ -135,14 +149,6 @@ a
 b
 c
 ```
-
-### Indexed arguments
-
-```bash
-cecho '{3}-{2}={1}' a b c
-```
-
-`c-b=a`
 
 ### Decimal formatting
 

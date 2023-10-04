@@ -62,4 +62,41 @@ mod tests {
 
         Ok(())
     }
+
+    // TODO: prints brackets using only 1 arg, no spec in the format
+    #[test]
+    fn print_just_brackets_using_2_args() -> Result<(), Box<dyn std::error::Error>> {
+        let mut cmd = Command::cargo_bin("cecho")?;
+
+        cmd.arg("{}").arg("{}");
+        cmd.assert()
+            .success()
+            .stdout(predicate::str::contains("{}"));
+
+        Ok(())
+    }
+
+    #[test]
+    fn print_indexed_specs() -> Result<(), Box<dyn std::error::Error>> {
+        let mut cmd = Command::cargo_bin("cecho")?;
+
+        cmd.arg("{3} {2} {1} {2} {3}").arg("1").arg("2").arg("3");
+        cmd.assert()
+            .success()
+            .stdout(predicate::str::contains("3 2 1 2 3"));
+
+        Ok(())
+    }
+
+    #[test]
+    fn print_literal_brackets() -> Result<(), Box<dyn std::error::Error>> {
+        let mut cmd = Command::cargo_bin("cecho")?;
+
+        cmd.arg(r#"\{{}\}"#).arg("value");
+        cmd.assert()
+            .success()
+            .stdout(predicate::str::contains("{value}"));
+
+        Ok(())
+    }
 }
