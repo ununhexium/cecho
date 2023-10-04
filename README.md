@@ -122,17 +122,21 @@ Optional formatting string. I must not need to guess what format I need if I onl
 
 Fast! Like a native binary.
 
-Format support à la printf but with modern format specifiers: 
- * positional `{}`
- * indexed `{1}`
- * named `{foo}`
- * number formatting `{1.5}`
- * simple colors `{#red}`
- * reset to default after printing? `{#red!preserve}` or auto reset? 🤔
- * any color `{#A03472}`
- * backgroud colors `{#white/red}`
- * Styles: bold, italic, blinki, reset, ... `{!bold}`
+Format support à la printf but with modern format specifiers:
+ * selectors
+   * positional `{}`
+   * indexed `{1}`
+   * named `{foo}`
+ * styles
+   * simple colors `{#red}`
+   * reset to default after printing? `{#red!preserve}` or auto reset? 🤔
+   * any color `{#A03472}`
+   * backgroud colors `{#white/red}`
+ * Styles: bold, italic, blink, reset, ... `{!bold}`
  * Position on screen `{@5,10}`
+ * format
+   * number formatting `{1.5}`
+   * upper case?
 
 ## Examples
 

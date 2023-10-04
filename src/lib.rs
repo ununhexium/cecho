@@ -1,6 +1,12 @@
 use std::str::Chars;
 use itertools;
 use itertools::Itertools;
+use lazy_static::lazy_static;
+use regex::{Captures, Match, Regex};
+use crate::Part::{Literal, Specification};
+use colored::Colorize;
+use crate::Color::Byte;
+use crate::Text::Positional;
 
 pub fn cecho(inputs: Vec<String>) -> Result<String, String> {
     // TODO matcher
@@ -19,13 +25,27 @@ pub fn cecho(inputs: Vec<String>) -> Result<String, String> {
                 let mut position = 0;
                 let result = specs.iter().map(|s|
                     match s {
-                        Spec::Litteral(l) => { l }
-                        Spec::Positional => {
-                            position += 1;
-                            &inputs[position]
-                        }
-                        Spec::Indexed(i) => {
-                            &inputs[*i]
+                        Literal(l) => { l.white() }
+                        Specification { selector, color } => {
+                            let text = match selector {
+                                Text::Indexed(i) => {
+                                    &inputs[*i]
+                                }
+                                Text::Positional => {
+                                    position += 1;
+                                    &inputs[position]
+                                }
+                            };
+
+                            match color {
+                                Some(ColorPair { fg, bg }) => {
+                                    match fg {
+                                        Some(Byte(1)) => text.red(),
+                                        _ => { todo!() }
+                                    }
+                                }
+                                _ => { text.white() }
+                            }
                         }
                     }
                 ).join("");
@@ -37,18 +57,88 @@ pub fn cecho(inputs: Vec<String>) -> Result<String, String> {
 
 #[derive(PartialEq)]
 #[derive(Debug)]
-enum Spec {
-    Litteral(String),
+enum Part {
+    Literal(String),
+    Specification {
+        selector: Text,
+        color: Option<ColorPair>,
+    },
+}
+
+impl Part {
+    pub const fn new(selector: Text) -> Self {
+        Specification { selector, color: None }
+    }
+    pub const fn indexed(index: usize) -> Self {
+        Specification { selector: Text::Indexed(index), color: None }
+    }
+}
+
+#[derive(PartialEq)]
+#[derive(Debug)]
+enum Text {
     Positional,
     Indexed(usize),
 }
 
-fn parse_format(format: &String) -> Result<Vec<Spec>, String> {
+#[derive(PartialEq)]
+#[derive(Debug)]
+struct ColorPair {
+    fg: Option<Color>,
+    bg: Option<Color>,
+}
+
+impl ColorPair {
+    pub const fn new(foreground: Color, background: Color) -> Self {
+        ColorPair { fg: Some(foreground), bg: Some(background) }
+    }
+    pub const fn new_fg(foreground: Color) -> Self {
+        ColorPair { fg: Some(foreground), bg: None }
+    }
+    pub const fn new_bg(foreground: Color, background: Color) -> Self {
+        ColorPair { fg: None, bg: Some(background) }
+    }
+}
+
+#[derive(PartialEq)]
+#[derive(Debug)]
+enum Color {
+    Byte(u8) // ANSI color set
+}
+
+impl Color {
+    pub const fn black() -> Self {
+        Color::Byte(0)
+    }
+    pub const fn red() -> Self {
+        Color::Byte(1)
+    }
+    pub const fn green() -> Self {
+        Color::Byte(2)
+    }
+    pub const fn yellow() -> Self {
+        Color::Byte(3)
+    }
+    pub const fn blue() -> Self {
+        Color::Byte(4)
+    }
+    pub const fn magenta() -> Self {
+        Color::Byte(5)
+    }
+    pub const fn cyan() -> Self {
+        Color::Byte(6)
+    }
+    pub const fn white() -> Self {
+        Color::Byte(7)
+    }
+}
+
+fn parse_format(format: &String) -> Result<Vec<Part>, String> {
     return parse_in_default_mode(&mut format.chars());
 }
 
-fn parse_in_default_mode<'a, 'b>(chars: &'a mut Chars<'a>) -> Result<Vec<Spec>, String> {
-    let mut specs: Vec<Spec> = Vec::new();
+fn parse_in_default_mode<'a, 'b>(chars: &'a mut Chars<'a>) -> Result<Vec<Part>, String> {
+    let mut specs: Vec<Part> = Vec::new();
     let mut escaped = false;
     let mut so_far = String::new();
 
@@ -58,7 +148,7 @@ fn parse_in_default_mode<'a, 'b>(chars: &'a mut Chars<'a>) -> Result<Vec<Spec>, 
                 if escaped {
                     so_far.push(c);
                 } else {
-                    specs.push(Spec::Litteral(so_far.to_string()));
+                    specs.push(Literal(so_far.to_string()));
                     so_far = String::new();
                     let next = parse_in_spec_mode(chars);
                     match next {
@@ -86,13 +176,18 @@ fn parse_in_default_mode<'a, 'b>(chars: &'a mut Chars<'a>) -> Result<Vec<Spec>, 
     }
 
     if !so_far.is_empty() {
-        specs.push(Spec::Litteral(so_far.to_string()));
+        specs.push(Literal(so_far.to_string()));
     }
 
     Ok(specs)
 }
 
-fn parse_in_spec_mode<'a, 'b>(chars: &mut Chars) -> Result<Spec, String> {
+// TODO: extend regex to stop and the next specifiers
+lazy_static! {
+    static ref index_regex : Regex = Regex::new("(?<index>[0-9]+)[#%!?]?").unwrap();
+}
+
+fn parse_in_spec_mode<'a, 'b>(chars: &mut Chars) -> Result<Part, String> {
     let mut so_far = String::new();
 
     while let Some(c) = chars.next() {
@@ -103,11 +198,26 @@ fn parse_in_spec_mode<'a, 'b>(chars: &mut Chars) -> Result<Spec, String> {
             '}' => {
                 return match so_far.as_ref() {
                     "" => {
-                        Ok(Spec::Positional)
+                        Ok(Specification { selector: Text::Positional, color: None })
                     }
                     _ => {
-                        let index = so_far.parse::<i32>().unwrap();
-                        Ok(Spec::Indexed(index as usize))
+                        let color_matcher = color_regex.captures(so_far.as_str());
+                        let color_spec: Option<ColorPair> = parse_color(color_matcher);
+
+                        let index_match = index_regex.captures(so_far.as_str());
+                        let index_spec: Option<Text> = match index_match {
+                            None => None,
+                            Some(index) => {
+                                match index.name("index") {
+                                    None => { todo!() }
+                                    Some(s) => {
+                                        Some(Text::Indexed(s.as_str().parse::<i32>().unwrap() as usize))
+                                    }
+                                }
+                            }
+                        };
+
+                        Ok(Specification { selector: index_spec.unwrap_or_else(|| Positional), color: color_spec })
                     }
                 };
             }
@@ -120,9 +230,31 @@ fn parse_in_spec_mode<'a, 'b>(chars: &mut Chars) -> Result<Spec, String> {
     Err("The specifiers are imbalanced: missing }".to_string())
 }
 
+lazy_static! {
+    static ref color_regex : Regex = Regex::new(".*#(?<value>.+)[#%!?]?").unwrap();
+}
+
+fn parse_color(color_spec: Option<Captures>) -> Option<ColorPair> {
+    match color_spec {
+        None => None,
+        Some(color) => {
+            match color.name("value") {
+                Some(s) => {
+                    match s.as_str() {
+                        "r" => { Some(ColorPair::new_fg(Color::red())) }
+                        &_ => { todo!("{}", s.as_str()) }
+                    }
+                }
+                _ => { todo!() }
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{cecho, parse_in_spec_mode, parse_in_default_mode, Spec};
+    use crate::{cecho, parse_in_spec_mode, parse_in_default_mode, Text, ColorPair, Color, Part};
+    use crate::Part::{Literal, Specification};
 
     macro_rules! vecs {
         ($($x:expr),*) => (vec![$($x.to_string()),*]);
@@ -179,7 +311,7 @@ mod tests {
         let specs = parse_in_default_mode(&mut "Hello, format!".to_string().chars());
         let ok = specs.ok().unwrap();
         assert_eq!(ok.len(), 1);
-        assert_eq!(ok[0], Spec::Litteral("Hello, format!".to_string()));
+        assert_eq!(ok[0], Literal("Hello, format!".to_string()));
     }
 
     #[test]
@@ -187,7 +319,7 @@ mod tests {
         let specs = parse_in_default_mode(&mut r#"Look at those dirty chars: \{ \\ \}"#.to_string().chars());
         let ok = specs.ok().unwrap();
         assert_eq!(ok.len(), 1);
-        assert_eq!(ok[0], Spec::Litteral(r#"Look at those dirty chars: { \ }"#.to_string()));
+        assert_eq!(ok[0], Literal(r#"Look at those dirty chars: { \ }"#.to_string()));
     }
 
     #[test]
@@ -195,8 +327,8 @@ mod tests {
         let specs = parse_in_default_mode(&mut "Spec={}".to_string().chars());
         let ok = specs.ok().unwrap();
         assert_eq!(ok.len(), 2);
-        assert_eq!(ok[0], Spec::Litteral("Spec=".to_string()));
-        assert_eq!(ok[1], Spec::Positional);
+        assert_eq!(ok[0], Literal("Spec=".to_string()));
+        assert_eq!(ok[1], Specification { selector: Text::Positional, color: None });
     }
 
     #[test]
@@ -221,15 +353,21 @@ mod tests {
     fn parse_a_single_digit_index_spec() {
         let specs = parse_in_spec_mode(&mut "8}".to_string().chars());
         let ok = specs.ok().unwrap();
-        assert_eq!(ok, Spec::Indexed(8));
+        assert_eq!(ok, Part::indexed(8));
     }
 
     #[test]
     fn parse_a_large_index_spec() {
         let specs = parse_in_spec_mode(&mut "116}".to_string().chars());
         let ok = specs.ok().unwrap();
-        assert_eq!(ok, Spec::Indexed(116));
+        assert_eq!(ok, Part::indexed(116));
     }
 
     // TODO: spec special chars escape \% \# \\ \? \! ...
+    #[test]
+    fn parse_red_specs() {
+        let specs = parse_in_spec_mode(&mut "#r}".to_string().chars());
+        let ok = specs.ok().unwrap();
+        assert_eq!(ok, Specification { selector: Text::Positional, color: Some(ColorPair::new_fg(Color::red())) });
+    }
 }
