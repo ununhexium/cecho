@@ -66,6 +66,15 @@ cecho '' 'Whatever you want here,' ' and there,' ' and some more..'
 
 `Whatever you want here, and there, and some more...`
 
+### Specify a format
+
+```bash
+cecho '{}+{}={}' 1 2 3
+```
+
+`1+2=3`
+
+
 
 ## Goals
 
@@ -98,14 +107,6 @@ Format support à la printf but with modern format specifiers:
 ## Examples
 
 The quoting and escaping in these examples is assuming that you write these command in a `sh`-like shell.
-
-### Specify a format
-
-```bash
-cecho '{}+{}={}' 1 2 3
-```
-
-`1+2=3`
 
 ### Print just brackets
 
