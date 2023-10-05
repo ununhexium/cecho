@@ -9,7 +9,7 @@ edition = "2021"
 itertools = "0.11.0"
 regex = "1.9.5"
 lazy_static = "1.4.0"
-colored = "2.0.4"
+colorz = "1.1.2"
 
 [dev-dependencies]
 assert_cmd = "2.0"

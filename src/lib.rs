@@ -1,10 +1,10 @@
 use std::str::Chars;
+use colorz::Colorize;
 use itertools;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex::{Captures, Match, Regex};
 use crate::Part::{Literal, Specification};
-use colored::Colorize;
 use crate::Color::Byte;
 use crate::Text::Positional;
 
@@ -25,7 +25,7 @@ pub fn cecho(inputs: Vec<String>) -> Result<String, String> {
                 let mut position = 0;
                 let result = specs.iter().map(|s|
                     match s {
-                        Literal(l) => { l.white() }
+                        Literal(l) => { l.to_string() }
                         Specification { selector, color } => {
                             let text = match selector {
                                 Text::Indexed(i) => {
@@ -40,11 +40,11 @@ pub fn cecho(inputs: Vec<String>) -> Result<String, String> {
                             match color {
                                 Some(ColorPair { fg, bg }) => {
                                     match fg {
-                                        Some(Byte(1)) => text.red(),
+                                        Some(Byte(1)) => text.red().to_string(),
                                         _ => { todo!() }
                                     }
                                 }
-                                _ => { text.white() }
+                                _ => { text.to_string() }
                             }
                         }
                     }
