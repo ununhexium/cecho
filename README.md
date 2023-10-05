@@ -9,6 +9,7 @@ A sanitized echo and sprintf alternative that also prints colors.
 Must be simple to start with and not trap people by default!
 
 Must be powerfull enough to not require extra tooling if it's easier, be it
+
 * bash's number formatting trick `$(([##7]v))` for format the variable v in base 7 for instance
 * printf's decimal formatting
 * escape sequences or tput coloring
@@ -17,9 +18,11 @@ I'm tired of looking up color codes and have unreadable color escape sequences.
 
 I don't want to play with `tput setaf 3` and have an unreadable echo statement.
 
-I'm tired of looking up printf's formats, I didn't touch C for years. I use modern languages with friendlier formatting options.
+I'm tired of looking up printf's formats, I didn't touch C for years. I use modern languages with friendlier formatting
+options.
 
-I don't want to build another layer of bash workarounds. It still contains all of echo's flaws regarding `-` `-n` `-e` and escape sequences.
+I don't want to build another layer of bash workarounds. It still contains all of echo's flaws regarding `-` `-n` `-e`
+and escape sequences.
 
 https://github.com/ununhexium/configfiles/blob/master/.local/scripts/cecho
 
@@ -27,20 +30,21 @@ https://github.com/ununhexium/configfiles/blob/master/.local/scripts/cecho2
 
 https://github.com/ununhexium/configfiles/blob/master/.local/scripts/bases
 
-I don't want to start a real scripting language, or even worse: the JVM, to highlight a few lines of output in a bash script.
+I don't want to start a real scripting language, or even worse: the JVM, to highlight a few lines of output in a bash
+script.
 
-It may as well be comprehensive so there's 1 tool that gives access to all of the shell's printing capabilities if the format string remains terse.
+It may as well be comprehensive so there's 1 tool that gives access to all of the shell's printing capabilities if the
+format string remains terse.
 I'm likely engaging on a slippery slope but we'll see if it's possible.
 
 I don't want to import and redeclare the colors each time I use them. This should be done once and for all.
 
 https://stackoverflow.com/questions/5412761/using-colors-with-printf
 
-
-
 ### Limitation is current tools
 
-Mix of bash's base formatting, sprintf's decimal formatting, echo workarounds, escape sequences or tput, alternative tool that auto-color based on various criteria
+Mix of bash's base formatting, sprintf's decimal formatting, echo workarounds, escape sequences or tput, alternative
+tool that auto-color based on various criteria
 
 ### Alternatives?
 
@@ -98,13 +102,11 @@ cecho '{3}-{2}={1}' a b c
 
 `c-b=a`
 
-
 ```bash
 cecho '{3} {2} {1} {2} {3}' 1 2 3
 ```
 
 `3 2 1 2 3`
-
 
 ## Goals
 
@@ -123,20 +125,21 @@ Optional formatting string. I must not need to guess what format I need if I onl
 Fast! Like a native binary.
 
 Format support à la printf but with modern format specifiers:
- * selectors
-   * positional `{}`
-   * indexed `{1}`
-   * named `{foo}`
- * styles
-   * simple colors `{#red}`
-   * reset to default after printing? `{#red!preserve}` or auto reset? 🤔
-   * any color `{#A03472}`
-   * backgroud colors `{#white/red}`
- * Styles: bold, italic, blink, reset, ... `{!bold}`
- * Position on screen `{@5,10}`
- * format
-   * number formatting `{1.5}`
-   * upper case?
+
+* selectors
+    * positional `{}`
+    * indexed `{1}`
+    * named `{foo}`
+* styles
+    * simple colors `{#red}`
+    * reset to default after printing? `{#red!preserve}` or auto reset? 🤔
+    * any color `{#A03472}`
+    * backgroud colors `{#white/red}`
+* Styles: bold, italic, blink, reset, ... `{!bold}`
+* Position on screen `{@5,10}`
+* format
+    * number formatting `{1.5}`
+    * upper case?
 
 ## Examples
 
@@ -156,7 +159,8 @@ c
 
 ### Decimal formatting
 
-TODO: is there another readily available program that could do the number formatting and let me not re-implement the wheel?
+TODO: is there another readily available program that could do the number formatting and let me not re-implement the
+wheel?
 
 Leave this to `printf` ?
 
@@ -226,7 +230,6 @@ TODO: distinguish indexed argument from number formatting.
 
 <span style="color:'blue'"> `003.14159` </span>
 
-
 ## Format specifiers brainstorming
 
 All the format given below are assumed ot be enclosed in `{}`
@@ -241,8 +244,6 @@ Format types:
 * Position `@`
 * Style `!`
 * Option `?`
-
-
 
 ```bash
 cecho '{?named}{foo@2,3#r%1.2!bold}' --foo=3.1415
@@ -266,47 +267,28 @@ In that case why not delegate the formatting to `printf`?
 
 ### Colors
 
-Colors could be specified by index (tput's setaf code), single letter or full name, case insensitive.
+Colors could be specified by index (tput's setaf code), single letter or full name, case sensitive.
 
-```
-#0
-#k
-#black
+Lower case is the normal variant, upper case is the bright variant.
 
-#1
-#r
-#red
+The color short names are based on the
+RGB: `r`ed, `g`reen, `b`lue,
+and CMYK: `c`yan, `m`agenta, `y`ellow, blac`k`
 
-#2
-#g
-#green
++ `w`hite.
 
-#3
-#y
-#yellow
+| Name    | code | short |  long   | code bright | short bright | long bright |
+|---------|:----:|:-----:|:-------:|:-----------:|:------------:|:-----------:|
+| Black   |  0   |   b   |  black  |      8      |      B       |    BLACK    |
+| Red     |  1   |   r   |   red   |      9      |      R       |     RED     |
+| Green   |  2   |   g   |  green  |     10      |      G       |    GREEN    |
+| Yellow  |  3   |   y   | yellow  |     11      |      Y       |   YELLOW    |
+| Blue    |  4   |   b   |  blue   |     12      |      B       |    BLUE     |
+| Magenta |  5   |   m   | magenta |     13      |      M       |   MAGENTA   |
+| Cyan    |  6   |   c   |  cyan   |     14      |      C       |    CYAN     |
+| White   |  7   |   w   |  white  |     15      |      W       |    WHITE    |
 
-#4
-#b
-#blue
-
-#5
-#m
-#magenta
-
-#6
-$c
-#cyan
-
-#7
-#w
-#white
-
-#abc
-#abc123
-```
-
-The last 2 lines are for arbitrary hex color codes.
-
+[//]: # (TODO: Html hex codes)
 
 #### Forefround/background
 
@@ -328,6 +310,10 @@ Support relative movement?
 
 `!style`
 
+TODO: local style (within the {})
+
+TODO: continuous style (from the marker until cancelled)
+
 ### Options
 
 Similar to regex options `(?=...)`
@@ -337,4 +323,11 @@ Similar to regex options `(?=...)`
 ## TODOs
 
 What formatting style to use? Python? Rust? C?
+
+
+## Documents and references
+
+### ANSI escape codes gist
+
+https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
 

@@ -3,10 +3,10 @@ use colorz::Colorize;
 use itertools;
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use regex::{Captures, Match, Regex};
+use regex::{Captures, Regex};
 use crate::Part::{Literal, Specification};
 use crate::Color::Byte;
-use crate::Text::Positional;
+use crate::Text::{Indexed, Positional};
 
 pub fn cecho(inputs: Vec<String>) -> Result<String, String> {
     // TODO matcher
@@ -26,26 +26,32 @@ pub fn cecho(inputs: Vec<String>) -> Result<String, String> {
                 let result = specs.iter().map(|s|
                     match s {
                         Literal(l) => { l.to_string() }
-                        Specification { selector, color } => {
-                            let text = match selector {
-                                Text::Indexed(i) => {
-                                    &inputs[*i]
+                        Specification { text: selector, color } => {
+                            let surroundings = match color {
+                                Some(ColorPair { fg, bg: _ }) => {
+                                    match fg {
+                                        Some(Byte(b)) => if b <= &b'\x08' {
+                                            (format!("\x1b[0;{}m", 30 + b), "\x1b[0m")
+                                        } else {
+                                            (format!("\x1b[0;{}m", 82 + b), "\x1b[0m")
+                                        }
+                                        _ => { ("".to_string(), "") }
+                                    }
                                 }
-                                Text::Positional => {
+                                _ => { ("".to_string(), "") }
+                            };
+
+                            let full = match selector {
+                                Indexed(i) => {
+                                    surroundings.0 + &inputs[*i] + surroundings.1
+                                }
+                                Positional => {
                                     position += 1;
-                                    &inputs[position]
+                                    surroundings.0 + &inputs[position] + surroundings.1
                                 }
                             };
 
-                            match color {
-                                Some(ColorPair { fg, bg }) => {
-                                    match fg {
-                                        Some(Byte(1)) => text.red().to_string(),
-                                        _ => { todo!() }
-                                    }
-                                }
-                                _ => { text.to_string() }
-                            }
+                            full.to_string()
                         }
                     }
                 ).join("");
@@ -60,17 +66,17 @@ pub fn cecho(inputs: Vec<String>) -> Result<String, String> {
 enum Part {
     Literal(String),
     Specification {
-        selector: Text,
+        text: Text,
         color: Option<ColorPair>,
     },
 }
 
 impl Part {
-    pub const fn new(selector: Text) -> Self {
-        Specification { selector, color: None }
-    }
     pub const fn indexed(index: usize) -> Self {
-        Specification { selector: Text::Indexed(index), color: None }
+        Specification { text: Text::Indexed(index), color: None }
+    }
+    pub const fn positional_color(color: ColorPair) -> Self {
+        Specification { text: Positional, color: Some(color) }
     }
 }
 
@@ -89,14 +95,8 @@ struct ColorPair {
 }
 
 impl ColorPair {
-    pub const fn new(foreground: Color, background: Color) -> Self {
-        ColorPair { fg: Some(foreground), bg: Some(background) }
-    }
     pub const fn new_fg(foreground: Color) -> Self {
         ColorPair { fg: Some(foreground), bg: None }
-    }
-    pub const fn new_bg(foreground: Color, background: Color) -> Self {
-        ColorPair { fg: None, bg: Some(background) }
     }
 }
 
@@ -107,30 +107,26 @@ enum Color {
 }
 
 impl Color {
-    pub const fn black() -> Self {
-        Color::Byte(0)
-    }
-    pub const fn red() -> Self {
-        Color::Byte(1)
-    }
-    pub const fn green() -> Self {
-        Color::Byte(2)
-    }
-    pub const fn yellow() -> Self {
-        Color::Byte(3)
-    }
-    pub const fn blue() -> Self {
-        Color::Byte(4)
-    }
-    pub const fn magenta() -> Self {
-        Color::Byte(5)
-    }
-    pub const fn cyan() -> Self {
-        Color::Byte(6)
-    }
-    pub const fn white() -> Self {
-        Color::Byte(7)
-    }
+    // bit notation: 0b4321
+    // bit 1 is red, bit 2 is green, bit 3 is blue, 4 is bright
+    pub const fn black() -> Self { Byte(0b000) }
+    pub const fn red() -> Self { Byte(0b001) }
+    pub const fn green() -> Self { Byte(0b010) }
+    pub const fn yellow() -> Self { Byte(0b011) }
+    pub const fn blue() -> Self { Byte(0b100) }
+    pub const fn magenta() -> Self { Byte(0b101) }
+    pub const fn cyan() -> Self { Byte(0b110) }
+    pub const fn white() -> Self { Byte(0b111) }
+
+    // because physics, lol XD
+    pub const fn bright_black() -> Self { Byte(0b1000) }
+    pub const fn bright_red() -> Self { Byte(0b1001) }
+    pub const fn bright_green() -> Self { Byte(0b1010) }
+    pub const fn bright_yellow() -> Self { Byte(0b1011) }
+    pub const fn bright_blue() -> Self { Byte(0b100) }
+    pub const fn bright_magenta() -> Self { Byte(0101) }
+    pub const fn bright_cyan() -> Self { Byte(0b1111) }
+    pub const fn bright_white() -> Self { Byte(0b1111) }
 }
 
 fn parse_format(format: &String) -> Result<Vec<Part>, String> {
@@ -184,7 +180,7 @@ fn parse_in_default_mode<'a, 'b>(chars: &'a mut Chars<'a>) -> Result<Vec<Part>, 
 
 // TODO: extend regex to stop and the next specifiers
 lazy_static! {
-    static ref index_regex : Regex = Regex::new("(?<index>[0-9]+)[#%!?]?").unwrap();
+    static ref INDEX_REGEX : Regex = Regex::new("^(?<index>[0-9]+)[#%!?]?").unwrap();
 }
 
 fn parse_in_spec_mode<'a, 'b>(chars: &mut Chars) -> Result<Part, String> {
@@ -198,26 +194,26 @@ fn parse_in_spec_mode<'a, 'b>(chars: &mut Chars) -> Result<Part, String> {
             '}' => {
                 return match so_far.as_ref() {
                     "" => {
-                        Ok(Specification { selector: Text::Positional, color: None })
+                        Ok(Specification { text: Positional, color: None })
                     }
                     _ => {
-                        let color_matcher = color_regex.captures(so_far.as_str());
+                        let color_matcher = COLOR_REGEX.captures(so_far.as_str());
                         let color_spec: Option<ColorPair> = parse_color(color_matcher);
 
-                        let index_match = index_regex.captures(so_far.as_str());
+                        let index_match = INDEX_REGEX.captures(so_far.as_str());
                         let index_spec: Option<Text> = match index_match {
                             None => None,
                             Some(index) => {
                                 match index.name("index") {
                                     None => { todo!() }
                                     Some(s) => {
-                                        Some(Text::Indexed(s.as_str().parse::<i32>().unwrap() as usize))
+                                        Some(Indexed(s.as_str().parse::<i32>().unwrap() as usize))
                                     }
                                 }
                             }
                         };
 
-                        Ok(Specification { selector: index_spec.unwrap_or_else(|| Positional), color: color_spec })
+                        Ok(Specification { text: index_spec.unwrap_or_else(|| Positional), color: color_spec })
                     }
                 };
             }
@@ -231,7 +227,7 @@ fn parse_in_spec_mode<'a, 'b>(chars: &mut Chars) -> Result<Part, String> {
 }
 
 lazy_static! {
-    static ref color_regex : Regex = Regex::new(".*#(?<value>.+)[#%!?]?").unwrap();
+    static ref COLOR_REGEX : Regex = Regex::new(".*#(?<value>.+)[#%!?]?").unwrap();
 }
 
 fn parse_color(color_spec: Option<Captures>) -> Option<ColorPair> {
@@ -241,7 +237,23 @@ fn parse_color(color_spec: Option<Captures>) -> Option<ColorPair> {
             match color.name("value") {
                 Some(s) => {
                     match s.as_str() {
-                        "r" => { Some(ColorPair::new_fg(Color::red())) }
+                        "0" | "k" | "black" => { Some(ColorPair::new_fg(Color::black())) }
+                        "1" | "r" | "red" => { Some(ColorPair::new_fg(Color::red())) }
+                        "2" | "g" | "green" => { Some(ColorPair::new_fg(Color::green())) }
+                        "3" | "y" | "yellow" => { Some(ColorPair::new_fg(Color::yellow())) }
+                        "4" | "b" | "blue" => { Some(ColorPair::new_fg(Color::blue())) }
+                        "5" | "m" | "magenta" => { Some(ColorPair::new_fg(Color::magenta())) }
+                        "6" | "c" | "cyan" => { Some(ColorPair::new_fg(Color::cyan())) }
+                        "7" | "w" | "white" => { Some(ColorPair::new_fg(Color::white())) }
+
+                        "8" | "K" | "BLACK" => { Some(ColorPair::new_fg(Color::bright_black())) }
+                        "9" | "R" | "RED" => { Some(ColorPair::new_fg(Color::bright_red())) }
+                        "10" | "G" | "GREEN" => { Some(ColorPair::new_fg(Color::bright_green())) }
+                        "11" | "Y" | "YELLOW" => { Some(ColorPair::new_fg(Color::bright_yellow())) }
+                        "12" | "B" | "BLUE" => { Some(ColorPair::new_fg(Color::bright_blue())) }
+                        "13" | "M" | "MAGENTA" => { Some(ColorPair::new_fg(Color::bright_magenta())) }
+                        "14" | "C" | "CYAN" => { Some(ColorPair::new_fg(Color::bright_cyan())) }
+                        "15" | "W" | "WHITE" => { Some(ColorPair::new_fg(Color::bright_white())) }
                         &_ => { todo!("{}", s.as_str()) }
                     }
                 }
@@ -328,7 +340,7 @@ mod tests {
         let ok = specs.ok().unwrap();
         assert_eq!(ok.len(), 2);
         assert_eq!(ok[0], Literal("Spec=".to_string()));
-        assert_eq!(ok[1], Specification { selector: Text::Positional, color: None });
+        assert_eq!(ok[1], Specification { text: Text::Positional, color: None });
     }
 
     #[test]
@@ -363,11 +375,98 @@ mod tests {
         assert_eq!(ok, Part::indexed(116));
     }
 
+    fn test_color_spec(spec: &str, color: Color) {
+        let specs = parse_in_spec_mode(&mut spec.to_string().chars());
+        let ok = specs.ok().unwrap();
+        assert_eq!(ok, Part::positional_color(ColorPair::new_fg(color)));
+    }
+
     // TODO: spec special chars escape \% \# \\ \? \! ...
     #[test]
+    fn parse_black_specs() {
+        test_color_spec("#0}", Color::black());
+        test_color_spec("#k}", Color::black());
+        test_color_spec("#black}", Color::black());
+
+        test_color_spec("#8}", Color::bright_black());
+        test_color_spec("#K}", Color::bright_black());
+        test_color_spec("#BLACK}", Color::bright_black());
+    }
+
+    #[test]
     fn parse_red_specs() {
-        let specs = parse_in_spec_mode(&mut "#r}".to_string().chars());
-        let ok = specs.ok().unwrap();
-        assert_eq!(ok, Specification { selector: Text::Positional, color: Some(ColorPair::new_fg(Color::red())) });
+        test_color_spec("#1}", Color::red());
+        test_color_spec("#r}", Color::red());
+        test_color_spec("#red}", Color::red());
+
+        test_color_spec("#9}", Color::bright_red());
+        test_color_spec("#R}", Color::bright_red());
+        test_color_spec("#RED}", Color::bright_red());
+    }
+
+    #[test]
+    fn parse_green_specs() {
+        test_color_spec("#2}", Color::green());
+        test_color_spec("#g}", Color::green());
+        test_color_spec("#green}", Color::green());
+
+        test_color_spec("#10}", Color::bright_green());
+        test_color_spec("#G}", Color::bright_green());
+        test_color_spec("#GREEN}", Color::bright_green());
+    }
+
+    #[test]
+    fn parse_yellow_specs() {
+        test_color_spec("#3}", Color::yellow());
+        test_color_spec("#y}", Color::yellow());
+        test_color_spec("#yellow}", Color::yellow());
+
+        test_color_spec("#11}", Color::bright_yellow());
+        test_color_spec("#Y}", Color::bright_yellow());
+        test_color_spec("#YELLOW}", Color::bright_yellow());
+    }
+
+    #[test]
+    fn parse_blue_specs() {
+        test_color_spec("#4}", Color::blue());
+        test_color_spec("#b}", Color::blue());
+        test_color_spec("#blue}", Color::blue());
+
+        test_color_spec("#12}", Color::bright_blue());
+        test_color_spec("#B}", Color::bright_blue());
+        test_color_spec("#BLUE}", Color::bright_blue());
+    }
+
+    #[test]
+    fn parse_magenta_specs() {
+        test_color_spec("#5}", Color::magenta());
+        test_color_spec("#m}", Color::magenta());
+        test_color_spec("#magenta}", Color::magenta());
+
+        test_color_spec("#13}", Color::bright_magenta());
+        test_color_spec("#M}", Color::bright_magenta());
+        test_color_spec("#MAGENTA}", Color::bright_magenta());
+    }
+
+    #[test]
+    fn parse_cyan_specs() {
+        test_color_spec("#6}", Color::cyan());
+        test_color_spec("#c}", Color::cyan());
+        test_color_spec("#cyan}", Color::cyan());
+
+        test_color_spec("#14}", Color::bright_cyan());
+        test_color_spec("#C}", Color::bright_cyan());
+        test_color_spec("#CYAN}", Color::bright_cyan());
+    }
+
+    #[test]
+    fn parse_white_specs() {
+        test_color_spec("#7}", Color::white());
+        test_color_spec("#w}", Color::white());
+        test_color_spec("#white}", Color::white());
+
+        test_color_spec("#15}", Color::bright_white());
+        test_color_spec("#W}", Color::bright_white());
+        test_color_spec("#WHITE}", Color::bright_white());
     }
 }
