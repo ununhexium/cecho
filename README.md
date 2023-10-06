@@ -50,9 +50,9 @@ tool that auto-color based on various criteria
 
 TODO: is there anything that comes close to this?
 
-## Implemented
+If yes list here.
 
-Spec draft v0.1
+## Implemented
 
 ### Print any string by omitting the format
 
@@ -97,13 +97,13 @@ cecho '\{{}\}' 'value'
 ### Indexed arguments
 
 ```bash
-cecho '{3}-{2}={1}' a b c
+cecho '{%3}-{%2}={%1}' a b c
 ```
 
 `c-b=a`
 
 ```bash
-cecho '{3} {2} {1} {2} {3}' 1 2 3
+cecho '{%3} {%2} {%1} {%2} {%3}' 1 2 3
 ```
 
 `3 2 1 2 3`
@@ -128,8 +128,7 @@ Format support à la printf but with modern format specifiers:
 
 * selectors
     * positional `{}`
-    * indexed `{1}`
-    * named `{foo}`
+    * indexed `{%1}`
 * styles
     * simple colors `{#red}`
     * reset to default after printing? `{#red!preserve}` or auto reset? 🤔
@@ -137,9 +136,6 @@ Format support à la printf but with modern format specifiers:
     * backgroud colors `{#white/red}`
 * Styles: bold, italic, blink, reset, ... `{!bold}`
 * Position on screen `{@5,10}`
-* format
-    * number formatting `{1.5}`
-    * upper case?
 
 ## Examples
 
@@ -181,6 +177,21 @@ TODO
 ```bash
 {}
 ```
+
+### In-place formatting
+
+```bash
+cecho '{this is blue#blue}'
+```
+
+<span style="color:blue;"> `this is blue` </span>
+
+
+```bash
+cecho '{this is not\#blue}'
+```
+
+`this is not#blue`
 
 ### Extra opt-in features
 
@@ -228,7 +239,7 @@ cecho '{!recurse}{?named}3.14159'
 
 TODO: distinguish indexed argument from number formatting.
 
-<span style="color:'blue'"> `003.14159` </span>
+<span style="color:blue;"> `003.14159` </span>
 
 ## Format specifiers brainstorming
 
@@ -273,9 +284,8 @@ Lower case is the normal variant, upper case is the bright variant.
 
 The color short names are based on the
 RGB: `r`ed, `g`reen, `b`lue,
-and CMYK: `c`yan, `m`agenta, `y`ellow, blac`k`
+and CMYK: `c`yan, `m`agenta, `y`ellow, blac`k` + `w`hite conventions.
 
-+ `w`hite.
 
 | Name    | code | short |  long   | code bright | short bright | long bright |
 |---------|:----:|:-----:|:-------:|:-----------:|:------------:|:-----------:|
