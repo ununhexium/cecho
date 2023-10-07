@@ -94,7 +94,7 @@ impl Color {
 
         match self {
             Byte(b) => {
-                code.push_str("\x1b[0;");
+                code.push_str("\x1b[");
                 if b < &8 {
                     code.push_str(&(30 + b).to_string());
                 }else{
@@ -113,7 +113,7 @@ impl Color {
 
         match self {
             Byte(b) => {
-                code.push_str("\x1b[0;");
+                code.push_str("\x1b[");
                 if b < &8 {
                     code.push_str(&(40 + b).to_string());
                 }else{

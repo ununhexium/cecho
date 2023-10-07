@@ -68,7 +68,7 @@ mod tests {
 
         let ok = result.unwrap();
 
-        assert_eq!(ok, "##\x1b[0;31mred\x1b[0m##");
+        assert_eq!(ok, "##\x1b[31mred\x1b[0m##");
     }
 
     #[test]
@@ -84,7 +84,7 @@ mod tests {
 
         let ok = result.unwrap();
 
-        assert_eq!(ok, "##\x1b[0;32mgreen\x1b[0m##");
+        assert_eq!(ok, "##\x1b[32mgreen\x1b[0m##");
     }
 
     #[test]
@@ -106,6 +106,6 @@ mod tests {
 
         let ok = result.unwrap();
 
-        assert_eq!(ok, "##\x1b[0;33m\x1b[0;41mDANGER\x1b[0m##");
+        assert_eq!(ok, "##\x1b[33m\x1b[41mDANGER\x1b[0m##");
     }
 }

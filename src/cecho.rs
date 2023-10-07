@@ -76,14 +76,14 @@ mod tests {
     fn print_red() {
         let i = vecs!("{#r}", "red");
         let actual = cecho(i);
-        assert_eq!(actual.ok(), Some("\x1b[0;31mred\x1b[0m".to_string()));
+        assert_eq!(actual.ok(), Some("\x1b[31mred\x1b[0m".to_string()));
     }
 
     #[test]
     fn print_green() {
         let i = vecs!("{#g}", "green");
         let actual = cecho(i);
-        assert_eq!(actual.ok(), Some("\x1b[0;32mgreen\x1b[0m".to_string()));
+        assert_eq!(actual.ok(), Some("\x1b[32mgreen\x1b[0m".to_string()));
     }
 
     // TODO detect invalid cases:
