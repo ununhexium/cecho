@@ -66,15 +66,13 @@ No `-` `--` `-n` `-e` etc. ambiguity as in `echo`
 
 No `%x` and other random characters like in `printf`
 
-No looking up for color code indexes nor figuring out which option ins corerct like in tput.
+No looking up for color code indexes nor figuring out which option is correct like in tput.
 
 Use full english nouns but allow existing styles for easy migration form those tools.
 
 Support color.
 
-Optional formatting string. I must not need to guess what format I need if I only want to print.
-
-Fast! Like a native binary.
+Fast! Native binary.
 
 Format support à la printf but with modern format specifiers:
 

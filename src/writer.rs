@@ -14,11 +14,18 @@ pub fn spec_to_ansi(inputs: &Vec<String>, specs: Vec<Part>) -> Result<String, St
                 let mut post = String::new();
 
                 color.foreground.as_ref().map(|fg| {
-                    let c = fg.as_ansi_escape_code();
+                    let c = fg.as_ansi_foreground_escape_code();
                     pre.push_str(&c);
-                    post.push_str("\x1b[0m")
                 });
 
+                color.background.as_ref().map(|fg| {
+                    let c = fg.as_ansi_background_escape_code();
+                    pre.push_str(&c);
+                });
+
+                if color.foreground.is_some() || color.background.is_some() {
+                    post.push_str("\x1b[0m")
+                }
 
                 let text = match selector {
                     Indexed(i) => {
@@ -78,5 +85,27 @@ mod tests {
         let ok = result.unwrap();
 
         assert_eq!(ok, "##\x1b[0;32mgreen\x1b[0m##");
+    }
+
+    #[test]
+    fn output_escape_sequence_for_yellow_on_red() {
+        let result = spec_to_ansi(
+            &vecs!("DANGER"),
+            vec!(
+                Part::literal("##"),
+                Part::indexed_color(
+                    0,
+                    Colors::new(
+                        Color::yellow(),
+                        Color::red()
+                    )
+                ),
+                Part::literal("##"),
+            ),
+        );
+
+        let ok = result.unwrap();
+
+        assert_eq!(ok, "##\x1b[0;33m\x1b[0;41mDANGER\x1b[0m##");
     }
 }

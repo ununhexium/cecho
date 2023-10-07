@@ -29,4 +29,9 @@ pr '{%1#1}{%1#g}{%1#blue}' '█'
 echo 'ANSI bright RGB'
 pr '{%1#9}{%1#G}{%1#BLUE}' '█'
 
+echo 'Comparison for the regular and bright color modes'
+$cecho '{%1#1}{%1#g}{%1#blue}' '█'
+echo
+$cecho '{%1#9}{%1#G}{%1#BLUE}' '█'
+echo
 
