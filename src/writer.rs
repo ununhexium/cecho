@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use crate::model::Color::Byte;
-use crate::model::{ColorPair, Part};
+use crate::model::{Colors, Part};
 use crate::model::Part::{Literal, Specification};
 use crate::model::Text::{Indexed, Positional};
 
@@ -10,31 +10,32 @@ pub fn spec_to_ansi(inputs: &Vec<String>, specs: Vec<Part>) -> Result<String, St
         match spec {
             Literal(literal) => { literal.to_string() }
             Specification { text: selector, color } => {
-                let surroundings = match color {
-                    Some(ColorPair { foreground: fg, background: _ }) => {
-                        match fg {
-                            Some(Byte(b)) => if b <= &b'\x08' {
-                                (format!("\x1b[0;{}m", 30 + b), "\x1b[0m")
-                            } else {
-                                (format!("\x1b[0;{}m", 82 + b), "\x1b[0m")
-                            }
-                            _ => { ("".to_string(), "") }
-                        }
-                    }
-                    _ => { ("".to_string(), "") }
-                };
+                let mut pre = String::new();
+                let mut post = String::new();
 
-                let full = match selector {
+                color.foreground.as_ref().map(|fg| {
+                    let c = fg.as_ansi_escape_code();
+                    pre.push_str(&c);
+                    post.push_str("\x1b[0m")
+                });
+
+
+                let text = match selector {
                     Indexed(i) => {
-                        surroundings.0 + &inputs[*i] + surroundings.1
+                        &inputs[*i]
                     }
                     Positional => {
                         position += 1;
-                        surroundings.0 + &inputs[position] + surroundings.1
+                        &inputs[position]
                     }
                 };
 
-                full.to_string()
+                let mut full = String::new();
+                full.push_str(&pre);
+                full.push_str(text);
+                full.push_str(&post);
+
+                full
             }
         }
     ).join("");
@@ -43,23 +44,39 @@ pub fn spec_to_ansi(inputs: &Vec<String>, specs: Vec<Part>) -> Result<String, St
 
 #[cfg(test)]
 mod tests {
-    use crate::model::{Color, ColorPair, Part};
+    use crate::model::{Color, Colors, Part};
     use crate::vecs;
     use crate::writer::spec_to_ansi;
 
     #[test]
     fn output_escape_sequence_for_red_string_surrounded_by_hashes() {
         let result = spec_to_ansi(
-            &vecs!("string"),
+            &vecs!("red"),
             vec!(
                 Part::literal("##"),
-                Part::indexed_color(0, ColorPair::new_fg(Color::red())),
+                Part::indexed_color(0, Colors::new_fg(Color::red())),
                 Part::literal("##"),
             ),
         );
 
         let ok = result.unwrap();
 
-        assert_eq!(ok, "##\x1b[0;31mstring\x1b[0m##");
+        assert_eq!(ok, "##\x1b[0;31mred\x1b[0m##");
+    }
+
+    #[test]
+    fn output_escape_sequence_for_green_string_surrounded_by_hashes() {
+        let result = spec_to_ansi(
+            &vecs!("green"),
+            vec!(
+                Part::literal("##"),
+                Part::indexed_color(0, Colors::new_fg(Color::green())),
+                Part::literal("##"),
+            ),
+        );
+
+        let ok = result.unwrap();
+
+        assert_eq!(ok, "##\x1b[0;32mgreen\x1b[0m##");
     }
 }

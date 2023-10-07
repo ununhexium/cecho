@@ -8,7 +8,7 @@ pub enum Part {
     Literal(String),
     Specification {
         text: Text,
-        color: Option<ColorPair>,
+        color: Colors,
     },
 }
 
@@ -16,11 +16,14 @@ impl Part {
     pub fn literal(text: &str) -> Self {
         Literal(text.to_string())
     }
-    pub const fn indexed(index: usize) -> Self {
-        Specification { text: Indexed(index), color: None }
+    pub fn positional() -> Self {
+        Specification { text: Positional, color: Colors::none() }
     }
-    pub const fn indexed_color(index: usize, color: ColorPair) -> Self {
-        Specification { text: Indexed(index), color: Some(color) }
+    pub const fn indexed(index: usize) -> Self {
+        Specification { text: Indexed(index), color: Colors::none() }
+    }
+    pub const fn indexed_color(index: usize, color: Colors) -> Self {
+        Specification { text: Indexed(index), color }
     }
 }
 
@@ -33,17 +36,20 @@ pub enum Text {
 
 #[derive(PartialEq)]
 #[derive(Debug)]
-pub struct ColorPair {
+pub struct Colors {
     pub foreground: Option<Color>,
     pub background: Option<Color>,
 }
 
-impl ColorPair {
+impl Colors {
+    pub const fn none() -> Self {
+        Colors { foreground: None, background: None }
+    }
     pub const fn new_fg(foreground: Color) -> Self {
-        ColorPair { foreground: Some(foreground), background: None }
+        Colors { foreground: Some(foreground), background: None }
     }
     pub const fn new_bg(background: Color) -> Self {
-        ColorPair { foreground: None, background: Some(background) }
+        Colors { foreground: None, background: Some(background) }
     }
 }
 
@@ -74,4 +80,23 @@ impl Color {
     pub const fn bright_magenta() -> Self { Byte(0101) }
     pub const fn bright_cyan() -> Self { Byte(0b1111) }
     pub const fn bright_white() -> Self { Byte(0b1111) }
+
+    pub fn as_ansi_escape_code(&self) -> String {
+        let mut code = String::new();
+
+        match self {
+            Byte(b) => {
+                code.push_str("\x1b[0;");
+                if b < &8 {
+                    code.push_str(&(30 + b).to_string());
+                }else{
+                    code.push_str(&(82 + b).to_string());
+                }
+
+                code.push_str("m");
+            }
+        }
+
+        code
+    }
 }

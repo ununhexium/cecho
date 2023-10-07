@@ -2,7 +2,6 @@ use crate::parser::parse_format;
 use crate::writer::spec_to_ansi;
 
 pub fn cecho(inputs: Vec<String>) -> Result<String, String> {
-    // TODO matcher
     if inputs.len() < 2 {
         Err("The minimum number of arguments is 2. The first argument is the format. If no formatting is necessary, use an empty string.".to_string())
     } else if inputs[0].is_empty() {
@@ -37,6 +36,12 @@ mod tests {
     }
 
     #[test]
+    fn print_formatted_string_with_positional_arguments() {
+        let actual = cecho(vecs!("{}+{}={}", "1", "2", "3"));
+        assert_eq!(actual.unwrap(), "1+2=3".to_string());
+    }
+
+    #[test]
     fn when_the_first_string_is_empty_and_there_are_2_arguments_just_return_the_second_argument() {
         let i = vecs!("", "{foo}");
         let actual = cecho(i);
@@ -65,6 +70,20 @@ mod tests {
         let i = vecs!("{} and {}", "A", "B");
         let actual = cecho(i);
         assert_eq!(actual.ok(), Some("A and B".to_string()));
+    }
+
+    #[test]
+    fn print_red() {
+        let i = vecs!("{#r}", "red");
+        let actual = cecho(i);
+        assert_eq!(actual.ok(), Some("\x1b[0;31mred\x1b[0m".to_string()));
+    }
+
+    #[test]
+    fn print_green() {
+        let i = vecs!("{#g}", "green");
+        let actual = cecho(i);
+        assert_eq!(actual.ok(), Some("\x1b[0;32mgreen\x1b[0m".to_string()));
     }
 
     // TODO detect invalid cases:

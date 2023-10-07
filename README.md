@@ -334,6 +334,7 @@ Similar to regex options `(?=...)`
 
 What formatting style to use? Python? Rust? C?
 
+Index is 0-based or 1-based?
 
 ## Documents and references
 

@@ -20,6 +20,7 @@ fn main() {
     }
 }
 
+/// CLI smoke tests
 #[cfg(test)]
 mod tests {
     use std::process::Command;
@@ -51,18 +52,6 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn print_formatted_string_with_positional_arguments() -> Result<(), Box<dyn std::error::Error>> {
-        let mut cmd = Command::cargo_bin("cecho")?;
-
-        cmd.arg("{}+{}={}").arg("1").arg("2").arg("3");
-        cmd.assert()
-            .success()
-            .stdout(predicate::str::contains("1+2=3"));
-
-        Ok(())
-    }
-
     // TODO: prints brackets using only 1 arg, no spec in the format
     #[test]
     fn print_just_brackets_using_2_args() -> Result<(), Box<dyn std::error::Error>> {
@@ -80,7 +69,7 @@ mod tests {
     fn print_indexed_specs() -> Result<(), Box<dyn std::error::Error>> {
         let mut cmd = Command::cargo_bin("cecho")?;
 
-        cmd.arg("{3} {2} {1} {2} {3}").arg("1").arg("2").arg("3");
+        cmd.arg("{%3} {%2} {%1} {%2} {%3}").arg("1").arg("2").arg("3");
         cmd.assert()
             .success()
             .stdout(predicate::str::contains("3 2 1 2 3"));

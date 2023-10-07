@@ -3,7 +3,7 @@ use std::str::Chars;
 use lazy_static::lazy_static;
 use regex::{Match, Regex};
 
-use crate::model::{Color, ColorPair, Part, Text};
+use crate::model::{Color, Colors, Part, Text};
 use crate::model::Part::{Literal, Specification};
 use crate::model::Text::{Indexed, Positional};
 
@@ -72,7 +72,7 @@ fn parse_format_in_spec_mode<'a, 'b>(chars: &mut Chars) -> Result<Part, String> 
             '}' => {
                 return match so_far.as_ref() {
                     "" => {
-                        Ok(Specification { text: Positional, color: None })
+                        Ok(Specification { text: Positional, color: Colors::none() })
                     }
                     _ => {
                         parse_spec(so_far.as_str())
@@ -89,12 +89,16 @@ fn parse_format_in_spec_mode<'a, 'b>(chars: &mut Chars) -> Result<Part, String> 
 }
 
 lazy_static! {
-    static ref PARTS_REGEX : Regex = Regex::new("^(%(?<text>[0-9]+))(?<color>#.+)?").unwrap();
+    static ref PARTS_REGEX : Regex = Regex::new("^(%(?<text>[0-9]+))?(?<color>#.+)?$").unwrap();
 }
 
 fn parse_spec(spec: &str) -> Result<Part, String> {
+    if spec.is_empty() {
+        return Ok(Part::positional());
+    }
+
     PARTS_REGEX.captures(spec).map(|capture| {
-        let color_spec: Option<ColorPair> = capture.name("color")
+        let color_spec: Option<Colors> = capture.name("color")
             .and_then(|it| parse_color(it.as_str()));
 
         let text_capture = capture.name("text");
@@ -102,19 +106,22 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
             Indexed(text.as_str().parse::<i32>().unwrap() as usize)
         }).unwrap_or_else(|| Positional);
 
-        Specification { text: text_spec, color: color_spec }
+        Specification {
+            text: text_spec,
+            color: color_spec.unwrap_or_else(|| Colors::none()),
+        }
     }).ok_or_else(|| format!("The specifier {} is invalid", spec))
 }
 
 lazy_static! {
-    static ref COLOR_REGEX : Regex = Regex::new(".*#(?<fg>[^/]+)?(/(?<bg>.+))?[#%!?]?").unwrap();
+    static ref COLOR_REGEX : Regex = Regex::new("^#(?<fg>[^/]+)?(/(?<bg>.+))?$").unwrap();
 }
 
-fn parse_color(so_far: &str) -> Option<ColorPair> {
+fn parse_color(so_far: &str) -> Option<Colors> {
     COLOR_REGEX.captures(so_far).map(|color| {
         let foreground = color.name("fg").map(|s| { interpret_color(s) });
         let background = color.name("bg").map(|s| { interpret_color(s) });
-        ColorPair { foreground, background }
+        Colors { foreground, background }
     })
 }
 
@@ -144,7 +151,7 @@ fn interpret_color(s: Match) -> Color {
 
 #[cfg(test)]
 mod tests {
-    use crate::model::{Color, ColorPair, Part, Text};
+    use crate::model::{Color, Colors, Part, Text};
     use crate::model::Part::{Literal, Specification};
     use crate::parser::{parse_color, parse_format_in_default_mode, parse_spec};
 
@@ -174,7 +181,7 @@ mod tests {
         let ok = specs.ok().unwrap();
         assert_eq!(ok.len(), 2);
         assert_eq!(ok[0], Literal("Spec=".to_string()));
-        assert_eq!(ok[1], Specification { text: Text::Positional, color: None });
+        assert_eq!(ok[1], Specification { text: Text::Positional, color: Colors::none() });
     }
 
     #[test]
@@ -194,6 +201,12 @@ mod tests {
     }
 
     // TODO: warn about extra arguments? pedantic mode?
+    #[test]
+    fn parse_an_empty_spec() {
+        let specs = parse_spec("");
+        let ok = specs.ok().unwrap();
+        assert_eq!(ok, Part::positional());
+    }
 
     #[test]
     fn parse_a_single_digit_index_spec() {
@@ -212,13 +225,13 @@ mod tests {
     fn test_color_spec(spec: &str, color: Color) {
         let specs = parse_color(&spec.to_string());
         let ok = specs.unwrap();
-        assert_eq!(ok, ColorPair::new_fg(color));
+        assert_eq!(ok, Colors::new_fg(color));
     }
 
     fn test_background_color_spec(spec: &str, color: Color) {
         let specs = parse_color(&spec.to_string());
         let ok = specs.unwrap();
-        assert_eq!(ok, ColorPair::new_bg(color));
+        assert_eq!(ok, Colors::new_bg(color));
     }
 
     // TODO: spec special chars escape \% \# \\ \? \! ...
@@ -318,9 +331,6 @@ mod tests {
     #[test]
     fn fail_gracefully_on_invalid_color_spec() {
         let specs = parse_spec("#");
-        assert!(specs.is_err());
-
-        let specs = parse_spec("#/");
         assert!(specs.is_err());
 
         let specs = parse_spec("/");

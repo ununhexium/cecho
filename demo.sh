@@ -24,9 +24,9 @@ echo 'Positional arguments'
 pr '{}+{}={}' 1 2 3
 
 echo 'ANSI RGB'
-pr '{1#1}{1#g}{1#blue}' '█'
+pr '{%1#1}{%1#g}{%1#blue}' '█'
 
 echo 'ANSI bright RGB'
-pr '{1#9}{1#G}{1#BLUE}' '█'
+pr '{%1#9}{%1#G}{%1#BLUE}' '█'
 
 
