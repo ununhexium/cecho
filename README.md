@@ -163,6 +163,10 @@ Example: `Some text followed by a specifier {}`
 
 Specified in `{}`, rust/python style.
 
+A specifier may contain whitespaces (` `, `\t`, ...) for an easier read.
+
+A specifier's text and color parts may be in any order.
+
 The specifier may contain the following information.
 
 ### A color

@@ -67,3 +67,7 @@ pr '{#black/white}\r{#red}' 'I hate cecho' 'I love'
 echo 'Whitespace is allowed aroung the specifiers'
 pr '{ % 1   # yellow / magenta }' 'WEIRD'
 
+echo "The specifier's parts order doesn't matter"
+pr '{%1 #blue}' XXX
+pr '{#blue %1}' XXX
+
