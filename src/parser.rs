@@ -33,14 +33,52 @@ fn parse_format_in_default_mode<'a, 'b>(chars: &'a mut Chars<'a>) -> Result<Vec<
             }
             '\\' => {
                 if escaped {
-                    so_far.push(c);
+                    so_far.push('\\');
                     escaped = false;
                 } else {
                     escaped = true;
                 }
             }
             _ => {
-                so_far.push(c);
+                if escaped {
+                    match c {
+                        'a' => {
+                            so_far.push('\x07');
+                        }
+                        'b' => {
+                            so_far.push('\x08');
+                        }
+                        't' => {
+                            so_far.push('\x09');
+                        }
+                        'n' => {
+                            so_far.push('\n');
+                        }
+                        'v' => {
+                            so_far.push('\x0b');
+                        }
+                        'f' => {
+                            so_far.push('\x0c');
+                        }
+                        'r' => {
+                            so_far.push('\x0d');
+                        }
+                        'e' => {
+                            so_far.push('\x1b');
+                        }
+                        '}' => {
+                            so_far.push('}');
+                        }
+                        '\\' => {
+                            panic!("This should never happen, \\ is handled above.")
+                        }
+                        _ => {
+                            panic!("Invalid escape sequence: \\{}", c)
+                        }
+                    }
+                } else {
+                    so_far.push(c);
+                }
             }
         }
 
@@ -153,7 +191,7 @@ fn interpret_color(s: Match) -> Color {
 mod tests {
     use crate::model::{Color, Colors, Part, Text};
     use crate::model::Part::{Literal, Specification};
-    use crate::parser::{parse_color, parse_format_in_default_mode, parse_spec};
+    use crate::parser::{parse_color, parse_format, parse_format_in_default_mode, parse_spec};
 
     // TODO detect invalid cases:
     // {garbage value}
@@ -329,12 +367,65 @@ mod tests {
     }
 
     #[test]
+    fn parse_fg_and_bg_specs() {
+        let specs = parse_color("#k/w");
+        let ok = specs.unwrap();
+        assert_eq!(ok, Colors::new(Color::black(), Color::white()));
+    }
+
+    #[test]
     fn fail_gracefully_on_invalid_color_spec() {
         let specs = parse_spec("#");
         assert!(specs.is_err());
 
         let specs = parse_spec("/");
         assert!(specs.is_err());
+    }
+
+    fn check_backslash_notation(notation: &str, code: &str) {
+        let specs = parse_format(&notation.to_string());
+        let ok = &specs.unwrap()[0];
+        assert_eq!(ok, &Part::literal(code));
+    }
+
+    #[test]
+    fn interpret_backslash_a_as_bell() {
+        check_backslash_notation(r#"\a"#, "\x07");
+    }
+
+    #[test]
+    fn interpret_backslash_b_as_backspace() {
+        check_backslash_notation(&r#"\b"#.to_string(),"\x08");
+    }
+
+    #[test]
+    fn interpret_backslash_t_as_horizontal_tab() {
+        check_backslash_notation(&r#"\t"#.to_string(),"\x09");
+    }
+
+    #[test]
+    fn interpret_backslash_n_as_line_feed() {
+        check_backslash_notation(&r#"\n"#.to_string(),"\x0a");
+    }
+
+    #[test]
+    fn interpret_backslash_v_as_vertical_tab() {
+        check_backslash_notation(&r#"\v"#.to_string(),"\x0b");
+    }
+
+    #[test]
+    fn interpret_backslash_f_as_form_feed() {
+        check_backslash_notation(&r#"\f"#.to_string(),"\x0c");
+    }
+
+    #[test]
+    fn interpret_backslash_r_as_carriage_return() {
+        check_backslash_notation(&r#"\r"#.to_string(),"\x0d");
+    }
+
+    #[test]
+    fn interpret_backslash_e_as_escape() {
+        check_backslash_notation(&r#"\e"#.to_string(),"\x1b");
     }
 
     // TODO: test color only

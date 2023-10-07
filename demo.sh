@@ -35,3 +35,28 @@ echo
 $cecho '{%1#9}{%1#G}{%1#BLUE}' '█'
 echo
 
+echo 'Use the usual c-style escape codes'
+
+echo 'Bell'
+pr '{#yellow}\a!' Ding
+
+echo 'Backspace'
+pr '{#green}\bps' 'Whooo'
+
+echo 'Tabulation'
+pr '\t{#magenta}' 'tab'
+
+echo 'New line'
+pr '{}\n{}' new line
+
+echo 'Vertival Tab'
+pr '1\v2\v3' ''
+
+echo 'Form feed'
+pr 'Page 1\fPage 2' ''
+
+echo 'Carriage return'
+pr '{#black/white}\r{#red}' 'I hate cecho' 'I love'
+
+
+

@@ -1,8 +1,13 @@
 # cecho
 
-Crisp echo.
+Color echo.
 
-A sanitized echo and sprintf alternative that also prints colors.
+A sanitized `printf` alternative that also prints colors.
+
+Actually works in `printf` style but with easy color and style specifiers.
+
+It's named after echo for "marketing" purposes because that's what people will 
+probably look for when the first want to print colored text.
 
 ## Implemented
 
@@ -124,7 +129,7 @@ I don't want to import and redeclare the colors each time I use them. This shoul
 
 https://stackoverflow.com/questions/5412761/using-colors-with-printf
 
-### Limitation is current tools
+### Limitation in current tools
 
 Mix of bash's base formatting, sprintf's decimal formatting, echo workarounds, escape sequences or tput, alternative
 tool that auto-color based on various criteria
@@ -183,7 +188,6 @@ cecho '{this is blue#blue}'
 ```
 
 <span style="color:blue;"> `this is blue` </span>
-
 
 ```bash
 cecho '{this is not\#blue}'
@@ -284,7 +288,6 @@ The color short names are based on the
 RGB: `r`ed, `g`reen, `b`lue,
 and CMYK: `c`yan, `m`agenta, `y`ellow, blac`k` + `w`hite conventions.
 
-
 | Name    | code | short |  long   | code bright | short bright | long bright |
 |---------|:----:|:-----:|:-------:|:-----------:|:------------:|:-----------:|
 | Black   |  0   |   b   |  black  |      8      |      B       |    BLACK    |
@@ -333,6 +336,10 @@ Similar to regex options `(?=...)`
 What formatting style to use? Python? Rust? C?
 
 Index is 0-based or 1-based?
+
+Error message improvements: position hint
+
+Make the arguments to be formatted optional when there are no format specs
 
 ## Documents and references
 
