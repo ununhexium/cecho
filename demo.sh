@@ -20,6 +20,12 @@ function pr {
 echo 'Simple echo'
 pr '' 'Simple echo'
 
+echo 'Canonical echo'
+pr 'Specifier: {#magenta}' 'value'
+
+echo 'Ommit the arguments if there is no specifier'
+pr 'Hello, world!'
+
 echo 'Positional arguments'
 pr '{}+{}={}' 1 2 3
 

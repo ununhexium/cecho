@@ -11,6 +11,8 @@ probably look for when the first want to print colored text.
 
 ## Implemented
 
+The quoting and escaping in these examples is assuming that you write these command in a `sh`-like shell.
+
 ### Print any string by omitting the format
 
 ```bash
@@ -27,21 +29,13 @@ cecho '' 'Whatever you want here,' ' and there,' ' and some more..'
 
 `Whatever you want here, and there, and some more...`
 
-### Specify a format
+### Specify a format to use colors
 
 ```bash
-cecho '{}+{}={}' 1 2 3
+cecho '{#r}+{#g}={#b}' 1 2 3
 ```
 
-`1+2=3`
-
-### Print just brackets
-
-```bash
-cecho '{}' '{}'
-```
-
-`{}`
+<pre><span style="color:red;">1</span>+<span style="color:green;">2</span>=<span style="color:blue;">3</span></pre>
 
 ### Literal brackets
 
@@ -64,6 +58,32 @@ cecho '{%3} {%2} {%1} {%2} {%3}' 1 2 3
 ```
 
 `3 2 1 2 3`
+
+### New lines and other c-style escape sequences
+
+```bash
+cecho 'a\nb\nc'
+```
+
+```
+a
+b
+c
+```
+
+### Print brackets
+
+```bash
+cecho '{}' '{}'
+```
+
+`{}`
+
+```bash
+cecho '\{}'
+```
+
+`{}`
 
 ## Goals
 
@@ -139,109 +159,6 @@ tool that auto-color based on various criteria
 TODO: is there anything that comes close to this?
 
 If yes list here.
-
-## Examples
-
-The quoting and escaping in these examples is assuming that you write these command in a `sh`-like shell.
-
-### New lines
-
-```bash
-cecho 'a\nb\nc'
-```
-
-```
-a
-b
-c
-```
-
-### Decimal formatting
-
-TODO: is there another readily available program that could do the number formatting and let me not re-implement the
-wheel?
-
-Leave this to `printf` ?
-
-```bash
-cecho '{02.02}' '9.8'
-```
-
-`09.80`
-
-TODO: extends the spec to support generalized number formats
-
-https://alvinalexander.com/programming/printf-format-cheat-sheet/
-
-### Base-X
-
-TODO
-
-```bash
-{}
-```
-
-### In-place formatting
-
-```bash
-cecho '{this is blue#blue}'
-```
-
-<span style="color:blue;"> `this is blue` </span>
-
-```bash
-cecho '{this is not\#blue}'
-```
-
-`this is not#blue`
-
-### Extra opt-in features
-
-These will break the features above and must be selected explicitly
-
-#### Named arguments
-
-```bash
-cecho '{?named}{foo} and {bar}' --foo=A --bar=B
-```
-
-`A and B`
-
-Regular behaviour:
-
-```bash
-cecho '{foo} and {bar}' --foo=A --bar=B
-```
-
-`--foo=A and --bar=B`
-
-#### Recursivity
-
-This one may become unmanageable but let's see if it's possible anyway.
-
-It recursively evaluates the arguments 1 by 1, modifying the format at each evaluation.
-
-```bash
-cecho '{?recurse}' '{?named}{foo}' --foo='{03.5@blue}' '3.14159265359'
-```
-
-Step by step this is equivalent to
-
-```bash
-cecho '{!recurse}{?named}{foo}' --foo='{03.5@blue}' '3.14159265359'
-```
-
-```bash
-cecho '{!recurse}{?named}{03.5@blue}' '3.14159265359'
-```
-
-```bash
-cecho '{!recurse}{?named}3.14159'
-```
-
-TODO: distinguish indexed argument from number formatting.
-
-<span style="color:blue;"> `003.14159` </span>
 
 ## Format specifiers brainstorming
 
@@ -333,13 +250,92 @@ Similar to regex options `(?=...)`
 
 ## TODOs
 
-What formatting style to use? Python? Rust? C?
-
 Index is 0-based or 1-based?
 
 Error message improvements: position hint
 
 Make the arguments to be formatted optional when there are no format specs
+
+
+### Decimal formatting
+
+TODO: is there another readily available program that could do the number formatting and let me not re-implement the
+wheel?
+
+Leave this to `printf` ?
+
+```bash
+cecho '{02.02}' '9.8'
+```
+
+`09.80`
+
+TODO: extends the spec to support generalized number formats
+
+https://alvinalexander.com/programming/printf-format-cheat-sheet/
+
+### In-place formatting
+
+```bash
+cecho '{this is blue#blue}'
+```
+
+<span style="color:blue;"> `this is blue` </span>
+
+```bash
+cecho '{this is not\#blue}'
+```
+
+`this is not#blue`
+
+### Extra opt-in features
+
+These will break the features above and must be selected explicitly
+
+#### Named arguments
+
+```bash
+cecho '{?named}{foo} and {bar}' --foo=A --bar=B
+```
+
+`A and B`
+
+Regular behaviour:
+
+```bash
+cecho '{foo} and {bar}' --foo=A --bar=B
+```
+
+`--foo=A and --bar=B`
+
+#### Recursivity
+
+This one may become unmanageable but let's see if it's possible anyway.
+
+It recursively evaluates the arguments 1 by 1, modifying the format at each evaluation.
+
+```bash
+cecho '{?recurse}' '{?named}{foo}' --foo='{03.5@blue}' '3.14159265359'
+```
+
+Step by step this is equivalent to
+
+```bash
+cecho '{!recurse}{?named}{foo}' --foo='{03.5@blue}' '3.14159265359'
+```
+
+```bash
+cecho '{!recurse}{?named}{03.5@blue}' '3.14159265359'
+```
+
+```bash
+cecho '{!recurse}{?named}3.14159'
+```
+
+TODO: distinguish indexed argument from number formatting.
+
+<span style="color:blue;"> `003.14159` </span>
+
 
 ## Documents and references
 
