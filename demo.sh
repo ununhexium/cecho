@@ -14,8 +14,14 @@ function pr {
     { set +x; } 2>/dev/null
     echo
     echo
-    [[ -z ${skip+x} ]] && read -n 1 -s -r -p "Press the ANY key to continue ;P"
+    echo -e "\e[2mPress the ANY key to continue ;P\e[0m"
+    [[ -z ${skip+x} ]] && read -n 1 -s -r
+    echo -e "\e[2J"
+    echo
 }
+
+# Clear the screen
+echo -e "\e[2J"
 
 echo 'Simple echo'
 pr '' 'Simple echo'
