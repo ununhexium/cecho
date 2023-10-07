@@ -39,13 +39,18 @@ cecho '{#r}+{#g}={#b}' 1 2 3
 
 <pre><span style="color:red;">1</span>+<span style="color:green;">2</span>=<span style="color:blue;">3</span></pre>
 
-### ANSI RGB using multiple color styles
+### ANSI rainbow
 
-`cecho '{%1#1}{%1#g}{%1#blue}' '█'`
+Use either codes, single letters or words to describe a color.
 
-<pre><span style="color:red;">█</span><span style="color:green;">█</span><span style="color:blue;">█</span></pre>
+`cecho '{%1#1}{%1#3}{%1#g}{%1#c}{%1#blue}{%1#magenta}' '█'`
 
-### ANSI bright RGB                
+<pre><span style="color:red;">█</span><span style="color:yellow;">█</span><span style="color:green;">█</span><span style="color:cyan;">█</span><span style="color:blue;">█</span><span style="color:magenta;">█</span></pre>
+
+### ANSI bright RGB
+
+Shows the color in a brighter variant.
+
 `cecho '{%1#9}{%1#G}{%1#BLUE}' '█'`
 
 <pre><span style="color:indianred;">█</span><span style="color:chartreuse;">█</span><span style="color:deepskyblue;">█</span></pre>
@@ -58,7 +63,17 @@ cecho '\{{#cyan}\}' 'value'
 
 <pre><span style="color:cyan;">{value}</span></pre>
 
+### Foreground and background colors
+
+```bash
+cecho '{#RED/YELLOW}' 'Warning!'
+```
+
+<pre><span style="color:red; background-color: yellow;">Warning!</span></pre>
+
 ### Indexed arguments
+
+Change the order of display or re-use a value.
 
 ```bash
 cecho '{%3}-{%2}={%1}' a b c
@@ -153,6 +168,12 @@ Split with slash foreground over background.
 
 `#foreground/background`
 
+Either side is optional.
+
+`#red` is a red font, regular background.
+`#/green` is a regular font, green background.
+`#red/green` is a red font, green background.
+`#/` is no color, same as not specifying a color.
 
 #### A reference
 
