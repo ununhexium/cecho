@@ -234,7 +234,6 @@ mod tests {
     fn parse_an_imbalanced_format() {
         let specs = parse_format_in_default_mode(&mut "Imbalanced {".to_string().chars());
         let err = specs.err().unwrap();
-        // TODO: improvement: tell the char that caused the issue
         assert_eq!(err, "The specifiers are imbalanced: missing }".to_string());
     }
 
@@ -272,7 +271,6 @@ mod tests {
         assert_eq!(ok, Colors::new_bg(color));
     }
 
-    // TODO: spec special chars escape \% \# \\ \? \! ...
     #[test]
     fn parse_black_specs() {
         test_color_spec("#0", Color::black());
@@ -427,6 +425,4 @@ mod tests {
     fn interpret_backslash_e_as_escape() {
         check_backslash_notation(&r#"\e"#.to_string(),"\x1b");
     }
-
-    // TODO: test color only
 }

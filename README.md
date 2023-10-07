@@ -9,9 +9,11 @@ Actually works in `printf` style but with easy color and style specifiers.
 It's named after echo for "marketing" purposes because that's what people will 
 probably look for when the first want to print colored text.
 
-## Implemented
+## Examples
 
 The quoting and escaping in these examples is assuming that you write these command in a `sh`-like shell.
+
+For more examples, compile and check the `./demo.bash` examples.
 
 ### Print any string by omitting the format
 
@@ -37,13 +39,24 @@ cecho '{#r}+{#g}={#b}' 1 2 3
 
 <pre><span style="color:red;">1</span>+<span style="color:green;">2</span>=<span style="color:blue;">3</span></pre>
 
+### ANSI RGB using multiple color styles
+
+`cecho '{%1#1}{%1#g}{%1#blue}' '█'`
+
+<pre><span style="color:red;">█</span><span style="color:green;">█</span><span style="color:blue;">█</span></pre>
+
+### ANSI bright RGB                
+`cecho '{%1#9}{%1#G}{%1#BLUE}' '█'`
+
+<pre><span style="color:indianred;">█</span><span style="color:chartreuse;">█</span><span style="color:deepskyblue;">█</span></pre>
+
 ### Literal brackets
 
 ```bash
-cecho '\{{}\}' 'value'
+cecho '\{{#cyan}\}' 'value'
 ```
 
-`{value}`
+<pre><span style="color:cyan;">{value}</span></pre>
 
 ### Indexed arguments
 
@@ -84,6 +97,84 @@ cecho '\{}'
 ```
 
 `{}`
+
+# Specification
+
+`cecho` takes at least 1 argument: a format and as many arguments as necessary.
+
+It works in the style of `printf`.
+
+## Format
+
+The format is a string of characters made of regular strings and placeholders.
+
+Example: `Some text followed by a specifier {}`
+
+## Specifiers
+
+Specified in `{}`, rust/python style.
+
+The specifier may contain the following information.
+
+### A color
+
+The color is indicated with `#`.
+
+The color may be regular or bright.
+
+The color is specified with different formats: code (number), single letter or word.
+
+The color short names are based on the
+RGB: `r`ed, `g`reen, `b`lue,
+and CMYKW: `c`yan, `m`agenta, `y`ellow, blac`k` + `w`hite conventions.
+
+Lower case is the normal variant, upper case is the bright variant.
+
+#### Named colors reference table
+
+| Name    | code | short |  long   | code bright | short bright | long bright |
+|---------|:----:|:-----:|:-------:|:-----------:|:------------:|:-----------:|
+| Black   |  0   |   b   |  black  |      8      |      B       |    BLACK    |
+| Red     |  1   |   r   |   red   |      9      |      R       |     RED     |
+| Green   |  2   |   g   |  green  |     10      |      G       |    GREEN    |
+| Yellow  |  3   |   y   | yellow  |     11      |      Y       |   YELLOW    |
+| Blue    |  4   |   b   |  blue   |     12      |      B       |    BLUE     |
+| Magenta |  5   |   m   | magenta |     13      |      M       |   MAGENTA   |
+| Cyan    |  6   |   c   |  cyan   |     14      |      C       |    CYAN     |
+| White   |  7   |   w   |  white  |     15      |      W       |    WHITE    |
+
+[//]: # (TODO: Html hex codes)
+
+#### Foreground/background
+
+The color may be applied to either the foreground, the background or both.
+
+Split with slash foreground over background.
+
+`#foreground/background`
+
+
+#### A reference
+
+Unlike `printf` where the order of arguments is forced,
+`cecho` may use arguments in any order with `%x` 
+where `x` is an integer referring to the arguments passed to `cecho`.
+
+To use it like `printf` do
+
+```bash
+cecho '{} {} {}' a b c
+``` 
+
+`a b c`
+
+To use it like a python format do
+
+```bash
+cecho '{3} {2} {1}' a b c
+``` 
+
+`c b a`
 
 ## Goals
 
@@ -195,39 +286,6 @@ printf style?
 
 In that case why not delegate the formatting to `printf`?
 
-### Colors
-
-Colors could be specified by index (tput's setaf code), single letter or full name, case sensitive.
-
-Lower case is the normal variant, upper case is the bright variant.
-
-The color short names are based on the
-RGB: `r`ed, `g`reen, `b`lue,
-and CMYK: `c`yan, `m`agenta, `y`ellow, blac`k` + `w`hite conventions.
-
-| Name    | code | short |  long   | code bright | short bright | long bright |
-|---------|:----:|:-----:|:-------:|:-----------:|:------------:|:-----------:|
-| Black   |  0   |   b   |  black  |      8      |      B       |    BLACK    |
-| Red     |  1   |   r   |   red   |      9      |      R       |     RED     |
-| Green   |  2   |   g   |  green  |     10      |      G       |    GREEN    |
-| Yellow  |  3   |   y   | yellow  |     11      |      Y       |   YELLOW    |
-| Blue    |  4   |   b   |  blue   |     12      |      B       |    BLUE     |
-| Magenta |  5   |   m   | magenta |     13      |      M       |   MAGENTA   |
-| Cyan    |  6   |   c   |  cyan   |     14      |      C       |    CYAN     |
-| White   |  7   |   w   |  white  |     15      |      W       |    WHITE    |
-
-[//]: # (TODO: Html hex codes)
-
-#### Forefround/background
-
-Split with slash foreground over background.
-
-`#foreground/background`
-
-`#white/red` if a white font on a red background.
-
-TODO: what if the terminal only supports 8 colors? Find the closest color that matches?
-
 ### Position
 
 `@row,column`
@@ -336,6 +394,7 @@ TODO: distinguish indexed argument from number formatting.
 
 <span style="color:blue;"> `003.14159` </span>
 
+TODO: what if the terminal only supports 8 colors? Find the closest color that matches?
 
 ## Documents and references
 

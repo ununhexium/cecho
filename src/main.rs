@@ -52,7 +52,6 @@ mod tests {
         Ok(())
     }
 
-    // TODO: prints brackets using only 1 arg, no spec in the format
     #[test]
     fn print_just_brackets_using_2_args() -> Result<(), Box<dyn std::error::Error>> {
         let mut cmd = Command::cargo_bin("cecho")?;
