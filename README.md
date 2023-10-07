@@ -15,6 +15,11 @@ The quoting and escaping in these examples is assuming that you write these comm
 
 For more examples, compile and check the `./demo.bash` examples.
 
+At the time of writing these lines, Github doesn't support coloring on its website.
+You will need to get a better Markdown reader,
+check out the Asciinerama showcase, 
+or compile and run the `demo.bash` script.
+
 ### Print any string by omitting the format
 
 ```bash
@@ -31,7 +36,11 @@ cecho '' 'Whatever you want here,' ' and there,' ' and some more..'
 
 `Whatever you want here, and there, and some more...`
 
-### Specify a format to use colors
+### Specify a format to use colors with the long or the short notation
+
+```bash
+cecho '{index=1 color=red}+{index=2 color=green}={index=3 color=blue}' 1 2 3
+```
 
 ```bash
 cecho '{#r}+{#g}={#b}' 1 2 3
@@ -47,21 +56,13 @@ Use either codes, single letters or words to describe a color.
 
 <pre><span style="color:red;">█</span><span style="color:yellow;">█</span><span style="color:green;">█</span><span style="color:cyan;">█</span><span style="color:blue;">█</span><span style="color:magenta;">█</span></pre>
 
-### ANSI bright RGB
+### ANSI bright colors
 
 Shows the color in a brighter variant.
 
 `cecho '{%1#9}{%1#G}{%1#BLUE}' '█'`
 
 <pre><span style="color:indianred;">█</span><span style="color:chartreuse;">█</span><span style="color:deepskyblue;">█</span></pre>
-
-### Literal brackets
-
-```bash
-cecho '\{{#cyan}\}' 'value'
-```
-
-<pre><span style="color:cyan;">{value}</span></pre>
 
 ### Foreground and background colors
 
@@ -87,32 +88,6 @@ cecho '{%3} {%2} {%1} {%2} {%3}' 1 2 3
 
 `3 2 1 2 3`
 
-### New lines and other c-style escape sequences
-
-```bash
-cecho 'a\nb\nc'
-```
-
-```
-a
-b
-c
-```
-
-### Print brackets
-
-```bash
-cecho '{}' '{}'
-```
-
-`{}`
-
-```bash
-cecho '\{}'
-```
-
-`{}`
-
 ### Unordered
 
 The specifiers' order is not important
@@ -135,17 +110,123 @@ Are the same
 If the specifier for an item is getting cluttered, for instance
 
 ```bash
-cecho '{#yellow/magenta%1}' 'foo'
+cecho '{#yellow/magenta%1!strikethrough}' 'foo'
 ```
 
-Take a deep breath, relax, and add whitespace for the same result.
+Take a deep breath, relax, and give yourself some space.
 Space and tabs are accepted.
 
 ```bash
-cecho '{ # yellow / magenta   % 1 }' 'foo'
+cecho '{ #yellow/magenta   %1   !strikethrough }' 'चक्र'
 ```
 
-<pre><span style="color:yellow; background-color: magenta;">foo</span></pre>
+<pre><span style="color:yellow; background-color: magenta; text-decoration: line-through;">चक्र</span></pre>
+
+### New lines and other c-style escape sequences
+
+```bash
+cecho 'a\nb\nc'
+```
+
+```
+a
+b
+c
+```
+
+### Literal brackets
+
+```bash
+cecho '\{{#cyan}\}' 'value'
+```
+
+<pre><span style="color:cyan;">{value}</span></pre>
+
+---
+
+```bash
+cecho '{}' '{}'
+```
+
+`{}`
+
+---
+
+```bash
+cecho '\{}'
+```
+
+`{}`
+
+### Styles
+
+Bold
+
+```bash
+cecho '{style=bold}' BOLD
+```
+
+<pre><b>BOLD</b></pre>
+
+Dimmed
+
+```bash
+cecho '{style=dim}' dimmed
+```
+
+<pre><span style="color:dimgray;">dimmed</span></pre>
+
+Italic
+
+```bash
+cecho '{style=italic}' Italic
+```
+
+<pre><span style="font-style: italic;">Italic</span></pre>
+
+Underline
+
+```bash
+cecho '{style=underline}' '_-^Underlined^-_'
+```
+
+<pre><span style="text-decoration: underline;">_-^Underlined^-_</span></pre>
+
+Blink
+
+This one may not show up as blinking on a web page but it sure blinks in the terminal 🌟
+
+```bash
+cecho '{style=blink}' 'Hey!'
+```
+
+<pre><span style="text-decoration: blink;">Hey!</span></pre>
+
+Reversed
+
+The foreground and background specs are inverted.
+
+```bash
+cecho '{style=reverse color=red/yellow}' 'This shows yellow on red instead of red on yellow'
+```
+
+<pre><span style="color:yellow; background-color: red;">This shows yellow on red instead of red on yellow</span></pre>
+
+Hidden
+
+```bash
+cecho '->{style=hidden}<-' 'Hide and seek'
+```
+
+<pre>-><span style="visibility: hidden;">Hide and seek</span><-</pre>
+
+Strike through
+
+```bash
+cecho '{style=strike color=red}' 'Wrong'
+```
+
+<pre><span style="text-decoration: line-through; color: red;">Wrong</span></pre>
 
 # Specification
 
@@ -213,7 +294,7 @@ Either side is optional.
 `#red/green` is a red font, green background.
 `#/` is no color, same as not specifying a color.
 
-#### A reference
+### A reference
 
 Unlike `printf` where the order of arguments is forced,
 `cecho` may use arguments in any order with `%x` 
@@ -235,6 +316,61 @@ cecho '{3} {2} {1}' a b c
 
 `c b a`
 
+### A style
+
+Supports all the styles that the ANSI escape codes allows.
+
+A style can be specified with the long option or the short option 
+`{style=bold}` or `{!bold}`.
+
+Some styles have several names.
+
+#### Bold
+
+`{style=bold}`
+
+#### Dim
+
+`{style=dim}`
+`{style=faint}`
+
+#### Italic
+
+`{style=italic}`
+
+#### Underline
+
+`{style=underline}`
+
+#### Blink
+
+`{style=blink}`
+`{style=blinking}`
+
+#### Inverted
+
+`{style=invert}`
+
+`{style=inverted}`
+
+`{style=inverse}`
+
+`{style=reverse}`
+
+`{style=reversed}`
+
+#### Hidden
+
+`{style=hidden}`
+
+`{style=invisible}`
+
+#### Strike through
+
+`{style=strikethrough}`
+
+`{style=strike}`
+
 ## Goals
 
 No `-` `--` `-n` `-e` etc. ambiguity as in `echo`
@@ -243,7 +379,7 @@ No `%x` and other random characters like in `printf`
 
 No looking up for color code indexes nor figuring out which option is correct like in tput.
 
-Use full english nouns but allow existing styles for easy migration form those tools.
+Useful english nouns but allow existing styles for easy migration form those tools.
 
 Support color.
 
@@ -367,6 +503,10 @@ Similar to regex options `(?=...)`
 
 ## TODOs
 
+Styles: bold, underline etc.
+
+Use `{*}` to mean "and here goes all the rest of the args if there are any left"
+
 Index is 0-based or 1-based?
 
 Error message improvements: position hint
@@ -394,13 +534,13 @@ https://alvinalexander.com/programming/printf-format-cheat-sheet/
 ### In-place formatting
 
 ```bash
-cecho '{this is blue#blue}'
+cecho '{"this is blue#blue}'
 ```
 
 <span style="color:blue;"> `this is blue` </span>
 
 ```bash
-cecho '{this is not\#blue}'
+cecho "{'this is not\\#blue}"
 ```
 
 `this is not#blue`
@@ -425,7 +565,7 @@ cecho '{foo} and {bar}' --foo=A --bar=B
 
 `--foo=A and --bar=B`
 
-#### Recursivity
+#### Recursion
 
 This one may become unmanageable but let's see if it's possible anyway.
 

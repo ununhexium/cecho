@@ -3,10 +3,11 @@ use std::str::Chars;
 use lazy_static::lazy_static;
 use regex::{Match, Regex};
 
-use crate::model::{Color, Colors, Part, Text};
+use crate::model::{Color, Colors, Part, Style, Text};
 use crate::model::Part::{Literal, Specification};
+use crate::model::Style::{Blink, Bold, Dim, Hidden, Invert, Italic, Strikethrough, Underline};
 use crate::model::Text::{Indexed, Positional};
-use crate::parser::ParserMode::{ColorMode, IndexMode};
+use crate::parser::ParserMode::{ColorMode, IndexMode, StyleMode};
 
 pub fn parse_format(format: &String) -> Result<Vec<Part>, String> {
     return parse_format_in_default_mode(&mut format.chars());
@@ -23,7 +24,9 @@ fn parse_format_in_default_mode<'a, 'b>(chars: &'a mut Chars<'a>) -> Result<Vec<
                 if escaped {
                     so_far.push(c);
                 } else {
-                    specs.push(Literal(so_far.to_string()));
+                    if !so_far.is_empty() {
+                        specs.push(Literal(so_far.to_string()));
+                    }
                     so_far = String::new();
                     let next = parse_format_in_spec_mode(chars);
                     match next {
@@ -111,7 +114,7 @@ fn parse_format_in_spec_mode<'a, 'b>(chars: &mut Chars) -> Result<Part, String> 
             '}' => {
                 return match so_far.as_ref() {
                     "" => {
-                        Ok(Specification { text: Positional, color: Colors::none() })
+                        Ok(Part::positional())
                     }
                     _ => {
                         parse_spec(so_far.as_str())
@@ -135,6 +138,7 @@ lazy_static! {
 enum ParserMode {
     IndexMode,
     ColorMode,
+    StyleMode,
 }
 
 fn parse_spec(spec: &str) -> Result<Part, String> {
@@ -146,23 +150,49 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
 
     let mut text = String::new();
     let mut color = String::new();
+    let mut style = String::new();
+    let mut last_word = String::new();
 
     for c in spec.chars() {
         match c {
             '#' => mode = Some(ColorMode),
             '%' => mode = Some(IndexMode),
-            // TODO ignore spaces
-            _ => match mode {
-                Some(m) => match m {
-                    IndexMode => { text.push(c) }
-                    ColorMode => { color.push(c) }
-                },
-                None => { /* TODO this could be used to parse string in the format */ }
+            '!' => mode = Some(StyleMode),
+            ' ' | '\t' => {
+                last_word.clear();
+                mode = None;
+            }
+            '=' => {
+                match last_word.as_str() {
+                    "color" => {
+                        mode = Some(ColorMode)
+                    }
+                    "index" => {
+                        mode = Some(IndexMode)
+                    }
+                    "style" => {
+                        mode = Some(StyleMode)
+                    }
+                    _ => panic!("Don't know how to interpret the keyword '{}' as a mode", last_word),
+                }
+            }
+            _ => {
+                last_word.push(c);
+
+                match mode {
+                    Some(m) => match m {
+                        IndexMode => text.push(c),
+                        ColorMode => color.push(c),
+                        StyleMode => style.push(c),
+                    },
+                    None => { /* TODO this could be used to parse raw strings in the format */ }
+                }
             }
         }
     }
 
     let color_spec: Option<Colors> = parse_color(&color.as_str());
+    let style_spec = parse_style(style);
     let text_spec = match text.trim() {
         "" => Positional,
         _ => {
@@ -176,6 +206,7 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
         Specification {
             text: text_spec,
             color: color_spec.unwrap_or_else(|| Colors::none()),
+            style: style_spec,
         }
     )
 }
@@ -215,16 +246,43 @@ fn interpret_color(s: Match) -> Color {
     }
 }
 
+fn parse_style(style: String) -> Option<Style> {
+    // TODO: make it not case sensitive
+    match style.as_str().trim() {
+        "bold" => Some(Bold),
+        "dim" | "faint" => Some(Dim),
+        "italic" => Some(Italic),
+        "underline" => Some(Underline),
+        "blink" | "blinking" => Some(Blink),
+        "invert" | "inverted" | "inverse" | "reversed" | "reverse" => Some(Invert),
+        "hidden" | "invisible" => Some(Hidden),
+        "strikethrough" | "strike" => Some(Strikethrough),
+        "" => None,
+        _ => panic!("Don't know how to interpret the style '{}'", style),
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
     use crate::model::{Color, Colors, Part, Text};
     use crate::model::Part::{Literal, Specification};
+    use crate::model::Style::{Blink, Bold, Dim, Hidden, Invert, Italic, Strikethrough, Underline};
     use crate::parser::{parse_color, parse_format, parse_format_in_default_mode, parse_spec};
 
     // TODO detect invalid cases:
     // {garbage value}
     // TODO refuse to mix positional, indexed and named, only 1 of each
+
+    fn test_ok_format(format: &str, parts: Vec<Part>) {
+        let specs = parse_format(&format.to_string());
+        let ok = specs.ok().unwrap();
+        assert_eq!(ok.len(), parts.len());
+
+        for i in 0..=parts.len() - 1 {
+            assert_eq!(ok[i], parts[i]);
+        }
+    }
 
     #[test]
     fn parse_a_string_that_contains_no_spec_in_default_mode() {
@@ -248,7 +306,7 @@ mod tests {
         let ok = specs.ok().unwrap();
         assert_eq!(ok.len(), 2);
         assert_eq!(ok[0], Literal("Spec=".to_string()));
-        assert_eq!(ok[1], Specification { text: Text::Positional, color: Colors::none() });
+        assert_eq!(ok[1], Part::positional());
     }
 
     #[test]
@@ -266,12 +324,50 @@ mod tests {
         assert_eq!(err, "The specifiers are imbalanced: missing }".to_string());
     }
 
+    #[test]
+    fn the_symbol_for_the_index_is_percent() {
+        test_ok_format("{%1}", vec!(Part::indexed(1)));
+    }
+
+    #[test]
+    fn the_name_for_the_index_is_index() {
+        test_ok_format("{index=1}", vec!(Part::indexed(1)));
+    }
+
+    #[test]
+    fn the_symbol_for_the_color_is_hash() {
+        test_ok_format("{#red}", vec!(Part::positional_color(Color::red())));
+    }
+
+    #[test]
+    fn the_name_for_the_color_is_color() {
+        test_ok_format("{color=red}", vec!(Part::positional_color(Color::red())));
+    }
+
+    #[test]
+    fn the_symbol_for_the_font_style_is_exclamation_mark() {
+        test_ok_format("{!bold}", vec!(Part::positional_style(Bold)));
+    }
+
+    #[test]
+    fn the_name_for_the_font_style_is_style() {
+        test_ok_format("{style=bold}", vec!(Part::positional_style(Bold)));
+    }
+
+    fn parse_ok_spec(spec: &str, expected: Part) {
+        let specs = parse_spec(spec);
+        let ok = specs.ok().unwrap();
+        assert_eq!(ok, expected);
+    }
+
     // TODO: warn about extra arguments? pedantic mode?
     #[test]
     fn parse_an_empty_spec() {
         let specs = parse_spec("");
         let ok = specs.ok().unwrap();
         assert_eq!(ok, Part::positional());
+
+        parse_ok_spec("", Part::positional())
     }
 
     #[test]
@@ -302,8 +398,28 @@ mod tests {
     }
 
     #[test]
-    fn the_specifiers_be_surrounded_by_spaces() {
-        let specs = parse_spec(" % 1 \t # red / magenta ");
+    fn the_specifiers_may_be_surrounded_by_spaces() {
+        let specs = parse_spec(" %1 \t #red/magenta ");
+
+        let ok = specs.ok().unwrap();
+
+        let expected = Part::indexed_color(1, Colors::new(Color::red(), Color::magenta()));
+        assert_eq!(ok, expected);
+    }
+
+    #[test]
+    fn the_specifiers_can_be_named() {
+        let specs = parse_spec("index=1 color=red/magenta");
+
+        let ok = specs.ok().unwrap();
+
+        let expected = Part::indexed_color(1, Colors::new(Color::red(), Color::magenta()));
+        assert_eq!(ok, expected);
+    }
+
+    #[test]
+    fn the_specifiers_styles_can_be_mixed() {
+        let specs = parse_spec("%1 color=red/magenta");
 
         let ok = specs.ok().unwrap();
 
@@ -471,5 +587,71 @@ mod tests {
     #[test]
     fn interpret_backslash_e_as_escape() {
         check_backslash_notation(&r#"\e"#.to_string(), "\x1b");
+    }
+
+    // font style
+
+    #[test]
+    fn parse_bold_style() {
+        parse_ok_spec("style=bold", Part::positional_style(Bold));
+        parse_ok_spec("!bold", Part::positional_style(Bold));
+    }
+
+    #[test]
+    fn parse_dim_style() {
+        parse_ok_spec("style=dim", Part::positional_style(Dim));
+        parse_ok_spec("style=faint", Part::positional_style(Dim));
+        parse_ok_spec("!dim", Part::positional_style(Dim));
+        parse_ok_spec("!faint", Part::positional_style(Dim));
+    }
+
+    #[test]
+    fn parse_italic_style() {
+        parse_ok_spec("style=italic", Part::positional_style(Italic));
+        parse_ok_spec("!italic", Part::positional_style(Italic));
+    }
+
+    #[test]
+    fn parse_underline_style() {
+        parse_ok_spec("style=underline", Part::positional_style(Underline));
+        parse_ok_spec("!underline", Part::positional_style(Underline));
+    }
+
+    #[test]
+    fn parse_blink_style() {
+        parse_ok_spec("style=blink", Part::positional_style(Blink));
+        parse_ok_spec("style=blinking", Part::positional_style(Blink));
+        parse_ok_spec("!blink", Part::positional_style(Blink));
+        parse_ok_spec("!blinking", Part::positional_style(Blink));
+    }
+
+    #[test]
+    fn parse_invert_style() {
+        parse_ok_spec("style=invert", Part::positional_style(Invert));
+        parse_ok_spec("style=inverted", Part::positional_style(Invert));
+        parse_ok_spec("style=inverse", Part::positional_style(Invert));
+        parse_ok_spec("style=reverse", Part::positional_style(Invert));
+        parse_ok_spec("style=reversed", Part::positional_style(Invert));
+        parse_ok_spec("!invert", Part::positional_style(Invert));
+        parse_ok_spec("!inverted", Part::positional_style(Invert));
+        parse_ok_spec("!inverse", Part::positional_style(Invert));
+        parse_ok_spec("!reverse", Part::positional_style(Invert));
+        parse_ok_spec("!reversed", Part::positional_style(Invert));
+    }
+
+    #[test]
+    fn parse_hidden_style() {
+        parse_ok_spec("style=hidden", Part::positional_style(Hidden));
+        parse_ok_spec("style=invisible", Part::positional_style(Hidden));
+        parse_ok_spec("!hidden", Part::positional_style(Hidden));
+        parse_ok_spec("!invisible", Part::positional_style(Hidden));
+    }
+
+    #[test]
+    fn parse_strikethrough_style() {
+        parse_ok_spec("style=strikethrough", Part::positional_style(Strikethrough));
+        parse_ok_spec("style=strike", Part::positional_style(Strikethrough));
+        parse_ok_spec("!strikethrough", Part::positional_style(Strikethrough));
+        parse_ok_spec("!strike", Part::positional_style(Strikethrough));
     }
 }

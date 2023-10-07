@@ -9,6 +9,7 @@ pub enum Part {
     Specification {
         text: Text,
         color: Colors,
+        style: Option<Style>,
     },
 }
 
@@ -17,25 +18,29 @@ impl Part {
         Literal(text.to_string())
     }
     pub fn positional() -> Self {
-        Specification { text: Positional, color: Colors::none() }
+        Specification { text: Positional, color: Colors::none(), style: None }
+    }
+    pub fn positional_color(color: Color) -> Self {
+        Specification { text: Positional, color: Colors::new_fg(color), style: None }
+    }
+    pub fn positional_style(style: Style) -> Self {
+        Specification { text: Positional, color: Colors::none(), style: Some(style) }
     }
     pub const fn indexed(index: usize) -> Self {
-        Specification { text: Indexed(index), color: Colors::none() }
+        Specification { text: Indexed(index), color: Colors::none(), style: None }
     }
     pub const fn indexed_color(index: usize, color: Colors) -> Self {
-        Specification { text: Indexed(index), color }
+        Specification { text: Indexed(index), color, style: None }
     }
 }
 
-#[derive(PartialEq)]
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub enum Text {
     Positional,
     Indexed(usize),
 }
 
-#[derive(PartialEq)]
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub struct Colors {
     pub foreground: Option<Color>,
     pub background: Option<Color>,
@@ -89,19 +94,16 @@ impl Color {
     pub const fn bright_cyan() -> Self { Byte(BRIGHT | GREEN | BLUE) }
     pub const fn bright_white() -> Self { Byte(BRIGHT | RED | GREEN | BLUE) }
 
-    pub fn as_ansi_foreground_escape_code(&self) -> String {
+    pub fn escape_code(&self) -> String {
         let mut code = String::new();
 
         match self {
             Byte(b) => {
-                code.push_str("\x1b[");
                 if b < &8 {
                     code.push_str(&(30 + b).to_string());
-                }else{
+                } else {
                     code.push_str(&(82 + b).to_string());
                 }
-
-                code.push_str("m");
             }
         }
 
@@ -116,7 +118,7 @@ impl Color {
                 code.push_str("\x1b[");
                 if b < &8 {
                     code.push_str(&(40 + b).to_string());
-                }else{
+                } else {
                     code.push_str(&(92 + b).to_string());
                 }
 
@@ -126,4 +128,17 @@ impl Color {
 
         code
     }
+}
+
+#[derive(PartialEq, Debug, Copy, Clone)]
+pub enum Style {
+    Reset = 0,
+    Bold = 1,
+    Dim = 2,
+    Italic = 3,
+    Underline = 4,
+    Blink = 5,
+    Invert = 7,
+    Hidden = 8,
+    Strikethrough = 9,
 }

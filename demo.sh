@@ -20,25 +20,26 @@ function pr {
 echo 'Simple echo'
 pr '' 'Simple echo'
 
-echo 'Canonical echo'
-pr 'Specifier: {#magenta}' 'value'
-
 echo 'Omit the arguments if there is no specifier'
 pr 'Hello, world!'
+
+echo 'Canonical echo'
+pr 'Specifier: {color=magenta}' 'value'
 
 echo 'Positional arguments'
 pr '{}+{}={}' 1 2 3
 
-echo 'ANSI RGB'
-pr '{%1#1}{%1#g}{%1#blue}' '█'
+echo 'ANSI RGB with long notation'
+pr '{index=1 color=1}{index=1 color=g}{index=1 color=blue}' '█'
 
-echo 'ANSI bright RGB'
+echo 'ANSI bright RGB with short notation'
 pr '{%1#9}{%1#G}{%1#BLUE}' '█'
 
 echo 'Comparison for the regular and bright color modes'
 $cecho '{%1#1}{%1#g}{%1#blue}' '█'
 echo
 $cecho '{%1#9}{%1#G}{%1#BLUE}' '█'
+echo
 echo
 
 echo 'Use the usual c-style escape codes'
@@ -65,7 +66,7 @@ echo 'Carriage return'
 pr '{#black/white}\r{#red}' 'I hate cecho' 'I love'
 
 echo 'Whitespace is allowed aroung the specifiers'
-pr '{ % 1   # yellow / magenta }' 'WEIRD'
+pr '{ %1 #yellow/magenta }' 'WEIRD'
 
 echo "The specifier's parts order doesn't matter"
 pr '{%1 #blue}' XXX

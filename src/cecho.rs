@@ -10,12 +10,13 @@ pub fn cecho(inputs: Vec<String>) -> Result<String, String> {
         Ok(specs) => {
             let has_specifiers = specs.iter().any(|it|
                 match it {
-                    Specification { text, color } => true,
+                    // TODO: those field are not needed?
+                    Specification { text, color, style } => true,
                     _ => false
                 });
 
             // TODO: text generic case with specifiers's ranges > inputs size
-            if inputs.len() < 2 && (has_specifiers || inputs[0].is_empty())  {
+            if inputs.len() < 2 && (has_specifiers || inputs[0].is_empty()) {
                 Err("The minimum number of arguments is 2. The first argument is the format. If no formatting is necessary, use an empty string.".to_string())
             } else if inputs[0].is_empty() {
                 let mut result = inputs[1].to_string();
