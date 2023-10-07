@@ -199,7 +199,7 @@ mod tests {
 
     #[test]
     fn parse_a_string_that_contains_no_spec_in_default_mode() {
-        let specs = parse_format_in_default_mode(&mut "Hello, format!".to_string().chars());
+        let specs = parse_format(&"Hello, format!".to_string());
         let ok = specs.ok().unwrap();
         assert_eq!(ok.len(), 1);
         assert_eq!(ok[0], Literal("Hello, format!".to_string()));
@@ -207,7 +207,7 @@ mod tests {
 
     #[test]
     fn parse_a_string_that_contains_no_spec_but_special_chars_in_default_mode() {
-        let specs = parse_format_in_default_mode(&mut r#"Look at those dirty chars: \{ \\ \}"#.to_string().chars());
+        let specs = parse_format(&r#"Look at those dirty chars: \{ \\ \}"#.to_string());
         let ok = specs.ok().unwrap();
         assert_eq!(ok.len(), 1);
         assert_eq!(ok[0], Literal(r#"Look at those dirty chars: { \ }"#.to_string()));
@@ -215,7 +215,7 @@ mod tests {
 
     #[test]
     fn parse_a_string_that_contains_1_spec_in_default_mode() {
-        let specs = parse_format_in_default_mode(&mut "Spec={}".to_string().chars());
+        let specs = parse_format(&"Spec={}".to_string());
         let ok = specs.ok().unwrap();
         assert_eq!(ok.len(), 2);
         assert_eq!(ok[0], Literal("Spec=".to_string()));
@@ -224,7 +224,7 @@ mod tests {
 
     #[test]
     fn parse_a_nested_format() {
-        let specs = parse_format_in_default_mode(&mut "Whatever {{}".to_string().chars());
+        let specs = parse_format(&"Whatever {{}".to_string());
         let err = specs.err().unwrap();
         // TODO: improvement: tell the char that caused the issue
         assert_eq!(err, "Can't nest specifiers".to_string());
@@ -232,7 +232,7 @@ mod tests {
 
     #[test]
     fn parse_an_imbalanced_format() {
-        let specs = parse_format_in_default_mode(&mut "Imbalanced {".to_string().chars());
+        let specs = parse_format(&"Imbalanced {".to_string());
         let err = specs.err().unwrap();
         assert_eq!(err, "The specifiers are imbalanced: missing }".to_string());
     }
@@ -393,36 +393,36 @@ mod tests {
 
     #[test]
     fn interpret_backslash_b_as_backspace() {
-        check_backslash_notation(&r#"\b"#.to_string(),"\x08");
+        check_backslash_notation(&r#"\b"#.to_string(), "\x08");
     }
 
     #[test]
     fn interpret_backslash_t_as_horizontal_tab() {
-        check_backslash_notation(&r#"\t"#.to_string(),"\x09");
+        check_backslash_notation(&r#"\t"#.to_string(), "\x09");
     }
 
     #[test]
     fn interpret_backslash_n_as_line_feed() {
-        check_backslash_notation(&r#"\n"#.to_string(),"\x0a");
+        check_backslash_notation(&r#"\n"#.to_string(), "\x0a");
     }
 
     #[test]
     fn interpret_backslash_v_as_vertical_tab() {
-        check_backslash_notation(&r#"\v"#.to_string(),"\x0b");
+        check_backslash_notation(&r#"\v"#.to_string(), "\x0b");
     }
 
     #[test]
     fn interpret_backslash_f_as_form_feed() {
-        check_backslash_notation(&r#"\f"#.to_string(),"\x0c");
+        check_backslash_notation(&r#"\f"#.to_string(), "\x0c");
     }
 
     #[test]
     fn interpret_backslash_r_as_carriage_return() {
-        check_backslash_notation(&r#"\r"#.to_string(),"\x0d");
+        check_backslash_notation(&r#"\r"#.to_string(), "\x0d");
     }
 
     #[test]
     fn interpret_backslash_e_as_escape() {
-        check_backslash_notation(&r#"\e"#.to_string(),"\x1b");
+        check_backslash_notation(&r#"\e"#.to_string(), "\x1b");
     }
 }
