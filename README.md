@@ -113,6 +113,40 @@ cecho '\{}'
 
 `{}`
 
+### Unordered
+
+The specifiers' order is not important
+
+```bash
+cecho '{#red%1}' 'RED'
+```
+and
+
+```bash
+cecho '{%1#red}' 'RED'
+```
+
+Are the same
+
+<pre><span style="color:red;">RED</span></pre>
+
+### Unclutter
+
+If the specifier for an item is getting cluttered, for instance
+
+```bash
+cecho '{#yellow/magenta%1}' 'foo'
+```
+
+Take a deep breath, relax, and add whitespace for the same result.
+Space and tabs are accepted.
+
+```bash
+cecho '{ # yellow / magenta   % 1 }' 'foo'
+```
+
+<pre><span style="color:yellow; background-color: magenta;">foo</span></pre>
+
 # Specification
 
 `cecho` takes at least 1 argument: a format and as many arguments as necessary.

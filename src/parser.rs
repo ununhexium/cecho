@@ -6,6 +6,7 @@ use regex::{Match, Regex};
 use crate::model::{Color, Colors, Part, Text};
 use crate::model::Part::{Literal, Specification};
 use crate::model::Text::{Indexed, Positional};
+use crate::parser::ParserMode::{ColorMode, IndexMode};
 
 pub fn parse_format(format: &String) -> Result<Vec<Part>, String> {
     return parse_format_in_default_mode(&mut format.chars());
@@ -130,33 +131,61 @@ lazy_static! {
     static ref PARTS_REGEX : Regex = Regex::new("^(%(?<text>[0-9]+))?(?<color>#.+)?$").unwrap();
 }
 
+#[derive(Copy, Clone)]
+enum ParserMode {
+    IndexMode,
+    ColorMode,
+}
+
 fn parse_spec(spec: &str) -> Result<Part, String> {
     if spec.is_empty() {
         return Ok(Part::positional());
     }
 
-    PARTS_REGEX.captures(spec).map(|capture| {
-        let color_spec: Option<Colors> = capture.name("color")
-            .and_then(|it| parse_color(it.as_str()));
+    let mut mode = None;
 
-        let text_capture = capture.name("text");
-        let text_spec: Text = text_capture.map(|text| {
-            Indexed(text.as_str().parse::<i32>().unwrap() as usize)
-        }).unwrap_or_else(|| Positional);
+    let mut text = String::new();
+    let mut color = String::new();
 
+    for c in spec.chars() {
+        match c {
+            '#' => mode = Some(ColorMode),
+            '%' => mode = Some(IndexMode),
+            // TODO ignore spaces
+            _ => match mode {
+                Some(m) => match m {
+                    IndexMode => { text.push(c) }
+                    ColorMode => { color.push(c) }
+                },
+                None => { /* TODO this could be used to parse string in the format */ }
+            }
+        }
+    }
+
+    let color_spec: Option<Colors> = parse_color(&color.as_str());
+    let text_spec = match text.trim() {
+        "" => Positional,
+        _ => {
+            text.as_str().trim().parse::<usize>().and_then(|it| Ok(Indexed(it))).unwrap_or_else(|it|
+                panic!("Don't know how to interpret the text specification '{}'", text)
+            )
+        }
+    };
+
+    Ok(
         Specification {
             text: text_spec,
             color: color_spec.unwrap_or_else(|| Colors::none()),
         }
-    }).ok_or_else(|| format!("The specifier {} is invalid", spec))
+    )
 }
 
 lazy_static! {
-    static ref COLOR_REGEX : Regex = Regex::new("^#(?<fg>[^/]+)?(/(?<bg>.+))?$").unwrap();
+    static ref COLOR_REGEX : Regex = Regex::new("^\\s*(?<fg>[^/]+)?\\s*(/\\s*(?<bg>.+))?\\s*$").unwrap();
 }
 
 fn parse_color(so_far: &str) -> Option<Colors> {
-    COLOR_REGEX.captures(so_far).map(|color| {
+    COLOR_REGEX.captures(so_far.trim()).map(|color| {
         let foreground = color.name("fg").map(|s| { interpret_color(s) });
         let background = color.name("bg").map(|s| { interpret_color(s) });
         Colors { foreground, background }
@@ -164,7 +193,7 @@ fn parse_color(so_far: &str) -> Option<Colors> {
 }
 
 fn interpret_color(s: Match) -> Color {
-    match s.as_str() {
+    match s.as_str().trim() {
         "0" | "k" | "black" => { Color::black() }
         "1" | "r" | "red" => { Color::red() }
         "2" | "g" | "green" => { Color::green() }
@@ -182,7 +211,7 @@ fn interpret_color(s: Match) -> Color {
         "13" | "M" | "MAGENTA" => { Color::bright_magenta() }
         "14" | "C" | "CYAN" => { Color::bright_cyan() }
         "15" | "W" | "WHITE" => { Color::bright_white() }
-        &_ => { todo!("Don't know how to interpret the foreground color {}", s.as_str()) }
+        &_ => { todo!("Don't know how to interpret the foreground color '{}'", s.as_str()) }
     }
 }
 
@@ -259,6 +288,31 @@ mod tests {
         assert_eq!(ok, Part::indexed(314159265));
     }
 
+    #[test]
+    fn the_specifiers_can_be_given_in_any_order() {
+        let specs1 = parse_spec("%1#red");
+        let specs2 = parse_spec("#red%1");
+
+        let ok1 = specs1.ok().unwrap();
+        let ok2 = specs2.ok().unwrap();
+
+        let expected = Part::indexed_color(1, Colors::new_fg(Color::red()));
+        assert_eq!(ok1, expected);
+        assert_eq!(ok2, expected);
+    }
+
+    #[test]
+    fn the_specifiers_be_surrounded_by_spaces() {
+        let specs = parse_spec(" % 1 \t # red / magenta ");
+
+        let ok = specs.ok().unwrap();
+
+        let expected = Part::indexed_color(1, Colors::new(Color::red(), Color::magenta()));
+        assert_eq!(ok, expected);
+    }
+
+    // color specifiers
+
     fn test_color_spec(spec: &str, color: Color) {
         let specs = parse_color(&spec.to_string());
         let ok = specs.unwrap();
@@ -273,112 +327,105 @@ mod tests {
 
     #[test]
     fn parse_black_specs() {
-        test_color_spec("#0", Color::black());
-        test_color_spec("#k", Color::black());
-        test_color_spec("#black", Color::black());
+        test_color_spec("0", Color::black());
+        test_color_spec("k", Color::black());
+        test_color_spec("black", Color::black());
 
-        test_color_spec("#8", Color::bright_black());
-        test_color_spec("#K", Color::bright_black());
-        test_color_spec("#BLACK", Color::bright_black());
+        test_color_spec("8", Color::bright_black());
+        test_color_spec("K", Color::bright_black());
+        test_color_spec("BLACK", Color::bright_black());
     }
 
     #[test]
     fn parse_red_specs() {
-        test_color_spec("#1", Color::red());
-        test_color_spec("#r", Color::red());
-        test_color_spec("#red", Color::red());
+        test_color_spec("1", Color::red());
+        test_color_spec("r", Color::red());
+        test_color_spec("red", Color::red());
 
-        test_color_spec("#9", Color::bright_red());
-        test_color_spec("#R", Color::bright_red());
-        test_color_spec("#RED", Color::bright_red());
+        test_color_spec("9", Color::bright_red());
+        test_color_spec("R", Color::bright_red());
+        test_color_spec("RED", Color::bright_red());
     }
 
     #[test]
     fn parse_green_specs() {
-        test_color_spec("#2", Color::green());
-        test_color_spec("#g", Color::green());
-        test_color_spec("#green", Color::green());
+        test_color_spec("2", Color::green());
+        test_color_spec("g", Color::green());
+        test_color_spec("green", Color::green());
 
-        test_color_spec("#10", Color::bright_green());
-        test_color_spec("#G", Color::bright_green());
-        test_color_spec("#GREEN", Color::bright_green());
+        test_color_spec("10", Color::bright_green());
+        test_color_spec("G", Color::bright_green());
+        test_color_spec("GREEN", Color::bright_green());
     }
 
     #[test]
     fn parse_yellow_specs() {
-        test_color_spec("#3", Color::yellow());
-        test_color_spec("#y", Color::yellow());
-        test_color_spec("#yellow", Color::yellow());
+        test_color_spec("3", Color::yellow());
+        test_color_spec("y", Color::yellow());
+        test_color_spec("yellow", Color::yellow());
 
-        test_color_spec("#11", Color::bright_yellow());
-        test_color_spec("#Y", Color::bright_yellow());
-        test_color_spec("#YELLOW", Color::bright_yellow());
+        test_color_spec("11", Color::bright_yellow());
+        test_color_spec("Y", Color::bright_yellow());
+        test_color_spec("YELLOW", Color::bright_yellow());
     }
 
     #[test]
     fn parse_blue_specs() {
-        test_color_spec("#4", Color::blue());
-        test_color_spec("#b", Color::blue());
-        test_color_spec("#blue", Color::blue());
+        test_color_spec("4", Color::blue());
+        test_color_spec("b", Color::blue());
+        test_color_spec("blue", Color::blue());
 
-        test_color_spec("#12", Color::bright_blue());
-        test_color_spec("#B", Color::bright_blue());
-        test_color_spec("#BLUE", Color::bright_blue());
+        test_color_spec("12", Color::bright_blue());
+        test_color_spec("B", Color::bright_blue());
+        test_color_spec("BLUE", Color::bright_blue());
     }
 
     #[test]
     fn parse_magenta_specs() {
-        test_color_spec("#5", Color::magenta());
-        test_color_spec("#m", Color::magenta());
-        test_color_spec("#magenta", Color::magenta());
+        test_color_spec("5", Color::magenta());
+        test_color_spec("m", Color::magenta());
+        test_color_spec("magenta", Color::magenta());
 
-        test_color_spec("#13", Color::bright_magenta());
-        test_color_spec("#M", Color::bright_magenta());
-        test_color_spec("#MAGENTA", Color::bright_magenta());
+        test_color_spec("13", Color::bright_magenta());
+        test_color_spec("M", Color::bright_magenta());
+        test_color_spec("MAGENTA", Color::bright_magenta());
     }
 
     #[test]
     fn parse_cyan_specs() {
-        test_color_spec("#6", Color::cyan());
-        test_color_spec("#c", Color::cyan());
-        test_color_spec("#cyan", Color::cyan());
+        test_color_spec("6", Color::cyan());
+        test_color_spec("c", Color::cyan());
+        test_color_spec("cyan", Color::cyan());
 
-        test_color_spec("#14", Color::bright_cyan());
-        test_color_spec("#C", Color::bright_cyan());
-        test_color_spec("#CYAN", Color::bright_cyan());
+        test_color_spec("14", Color::bright_cyan());
+        test_color_spec("C", Color::bright_cyan());
+        test_color_spec("CYAN", Color::bright_cyan());
     }
 
     #[test]
     fn parse_white_specs() {
-        test_color_spec("#7", Color::white());
-        test_color_spec("#w", Color::white());
-        test_color_spec("#white", Color::white());
+        test_color_spec("7", Color::white());
+        test_color_spec("w", Color::white());
+        test_color_spec("white", Color::white());
 
-        test_color_spec("#15", Color::bright_white());
-        test_color_spec("#W", Color::bright_white());
-        test_color_spec("#WHITE", Color::bright_white());
+        test_color_spec("15", Color::bright_white());
+        test_color_spec("W", Color::bright_white());
+        test_color_spec("WHITE", Color::bright_white());
     }
 
     #[test]
     fn parse_background_specs() {
-        test_background_color_spec("#/k", Color::black());
+        test_background_color_spec("/k", Color::black());
     }
 
     #[test]
-    fn parse_fg_and_bg_specs() {
-        let specs = parse_color("#k/w");
+    fn parse_foreground_and_background_specs() {
+        let specs = parse_color("k/w");
         let ok = specs.unwrap();
         assert_eq!(ok, Colors::new(Color::black(), Color::white()));
     }
 
-    #[test]
-    fn fail_gracefully_on_invalid_color_spec() {
-        let specs = parse_spec("#");
-        assert!(specs.is_err());
-
-        let specs = parse_spec("/");
-        assert!(specs.is_err());
-    }
+    // escape sequences
 
     fn check_backslash_notation(notation: &str, code: &str) {
         let specs = parse_format(&notation.to_string());

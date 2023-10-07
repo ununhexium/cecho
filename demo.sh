@@ -23,7 +23,7 @@ pr '' 'Simple echo'
 echo 'Canonical echo'
 pr 'Specifier: {#magenta}' 'value'
 
-echo 'Ommit the arguments if there is no specifier'
+echo 'Omit the arguments if there is no specifier'
 pr 'Hello, world!'
 
 echo 'Positional arguments'
@@ -64,5 +64,6 @@ pr 'Page 1\fPage 2' ''
 echo 'Carriage return'
 pr '{#black/white}\r{#red}' 'I hate cecho' 'I love'
 
-
+echo 'Whitespace is allowed aroung the specifiers'
+pr '{ % 1   # yellow / magenta }' 'WEIRD'
 
