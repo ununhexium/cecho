@@ -1,5 +1,5 @@
 use std::env;
-use cecho::cecho;
+use cecho::cecho::cecho;
 
 fn main() {
     let mut arguments: Vec<String> = Vec::new();
