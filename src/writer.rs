@@ -13,10 +13,12 @@ pub fn spec_to_ansi(inputs: &[String], specs: Vec<Part>) -> Result<String, Strin
                 let mut pre = String::new();
                 let mut post = String::new();
 
+                // prepare to add color or style
                 if style.is_some() || color.foreground.is_some() {
                     pre.push_str("\x1b[");
                 }
 
+                // reset the color and style
                 if style.is_some() || color.foreground.is_some() || color.background.is_some() {
                     post.push_str("\x1b[0m")
                 }
@@ -35,8 +37,11 @@ pub fn spec_to_ansi(inputs: &[String], specs: Vec<Part>) -> Result<String, Strin
                 }
 
                 color.background.as_ref().map(|fg| {
+
+                    pre.push_str("\x1b[");
                     let c = fg.as_ansi_background_escape_code();
                     pre.push_str(&c);
+                    pre.push_str("m");
                 });
 
                 let text = match selector {
@@ -141,5 +146,29 @@ mod tests {
                 Part::literal("##"),
             ),
             "##\x1b[5mTikTok\x1b[0m##");
+    }
+
+    #[test]
+    fn output_rgb_color_brown() {
+        test_ok_spec_to_ansi(
+            vecs!("Poop"),
+            vec!(
+                Part::literal("##"),
+                Part::positional_color(Color::rgb(84,55,15)),
+                Part::literal("##"),
+            ),
+            "##\x1b[38;2;84;55;15mPoop\x1b[0m##");
+    }
+
+    #[test]
+    fn output_rgb_background_color_brown() {
+        test_ok_spec_to_ansi(
+            vecs!("Poop"),
+            vec!(
+                Part::literal("##"),
+                Part::positional_background_color(Color::rgb(84,55,15)),
+                Part::literal("##"),
+            ),
+            "##\x1b[48;2;84;55;15mPoop\x1b[0m##");
     }
 }

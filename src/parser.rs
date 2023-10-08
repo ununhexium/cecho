@@ -1,3 +1,4 @@
+use std::num::ParseIntError;
 use std::str::Chars;
 
 use lazy_static::lazy_static;
@@ -212,15 +213,19 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
 }
 
 lazy_static! {
-    static ref COLOR_REGEX : Regex = Regex::new("^\\s*(?<fg>[^/]+)?\\s*(/\\s*(?<bg>.+))?\\s*$").unwrap();
+    static ref COLOR_PARTS_REGEX : Regex = Regex::new("^\\s*(?<fg>[^/]+)?\\s*(/\\s*(?<bg>.+))?\\s*$").unwrap();
 }
 
 fn parse_color(so_far: &str) -> Option<Colors> {
-    COLOR_REGEX.captures(so_far.trim()).map(|color| {
+    COLOR_PARTS_REGEX.captures(so_far.trim()).map(|color| {
         let foreground = color.name("fg").map(|s| { interpret_color(s) });
         let background = color.name("bg").map(|s| { interpret_color(s) });
         Colors { foreground, background }
     })
+}
+
+lazy_static! {
+    static ref HEX_COLOR : Regex = Regex::new(r#"^(?<code>[[:xdigit:]]{6})|(?<function>rgb\([[:xdigit:]]{2},[[:xdigit:]]{2},[[:xdigit:]]{2}\))$"#).unwrap();
 }
 
 fn interpret_color(s: Match) -> Color {
@@ -242,7 +247,21 @@ fn interpret_color(s: Match) -> Color {
         "13" | "M" | "MAGENTA" => { Color::bright_magenta() }
         "14" | "C" | "CYAN" => { Color::bright_cyan() }
         "15" | "W" | "WHITE" => { Color::bright_white() }
-        &_ => { todo!("Don't know how to interpret the foreground color '{}'", s.as_str()) }
+        more => {
+            let captures = HEX_COLOR.captures(&more);
+            let hex_color_str = captures.and_then(|it| it.name("code"));
+
+            match hex_color_str {
+                None => { panic!("Can't find the color code in {}", more.to_string()) }
+                Some(s) => {
+                    match u32::from_str_radix(s.as_str(), 16) {
+                        Ok(value) => Color::u32_rgb(value),
+                        Err(e) => { panic!("{}", e.to_string()) }
+                    }
+                }
+                _ => todo!("Don't know how to interpret the color '{}'", s.as_str())
+            }
+        }
     }
 }
 
@@ -536,6 +555,19 @@ mod tests {
         test_color_spec("W", Color::bright_white());
         test_color_spec("WHITE", Color::bright_white());
     }
+
+    #[test]
+    fn can_use_rgb_in_its_full_glory() {
+        // brown #54370f
+        test_color_spec("54370f", Color::rgb(0x54, 0x37, 0x0f));
+    }
+
+    // TODO decimal notation
+    // #[test]
+    // fn can_use_rgb_in_its_full_glory_with_decimal() {
+    //     // brown #54370f
+    //     test_color_spec("rgb(84,55,15)", Color::rgb(0x54, 0x37, 0x0f));
+    // }
 
     #[test]
     fn parse_background_specs() {

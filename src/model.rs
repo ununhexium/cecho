@@ -1,4 +1,4 @@
-use crate::model::Color::Byte;
+use crate::model::Color::{Byte, RGB};
 use crate::model::Part::{Literal, Specification};
 use crate::model::Text::{Indexed, Positional};
 
@@ -22,6 +22,9 @@ impl Part {
     }
     pub fn positional_color(color: Color) -> Self {
         Specification { text: Positional, color: Colors::new_fg(color), style: None }
+    }
+    pub fn positional_background_color(color: Color) -> Self {
+        Specification { text: Positional, color: Colors::new_bg(color), style: None }
     }
     pub fn positional_style(style: Style) -> Self {
         Specification { text: Positional, color: Colors::none(), style: Some(style) }
@@ -64,8 +67,15 @@ impl Colors {
 #[derive(PartialEq)]
 #[derive(Debug)]
 pub enum Color {
-    Byte(u8) // ANSI color set
+    Byte(u8),
+    // ANSI color set
+    RGB {
+        red: u8,
+        green: u8,
+        blue: u8,
+    },
 }
+
 
 // bit notation or bytes: 0b4321
 // bit 1 is red, bit 2 is green, bit 3 is blue, 4 is bright
@@ -94,6 +104,15 @@ impl Color {
     pub const fn bright_cyan() -> Self { Byte(BRIGHT | GREEN | BLUE) }
     pub const fn bright_white() -> Self { Byte(BRIGHT | RED | GREEN | BLUE) }
 
+    pub fn u32_rgb(value: u32) -> Self {
+        RGB {
+            red: ((value >> 16) & 0xff) as u8,
+            green: ((value >> 8) & 0xff) as u8,
+            blue: (value & 0xff) as u8,
+        }
+    }
+    pub fn rgb(red: u8, green: u8, blue: u8) -> Self { RGB { red, green, blue } }
+
     pub fn escape_code(&self) -> String {
         let mut code = String::new();
 
@@ -105,6 +124,14 @@ impl Color {
                     code.push_str(&(82 + b).to_string());
                 }
             }
+            RGB { red, green, blue } => {
+                code.push_str("38;2;");
+                code.push_str(&red.to_string());
+                code.push(';');
+                code.push_str(&green.to_string());
+                code.push(';');
+                code.push_str(&blue.to_string());
+            }
         }
 
         code
@@ -115,14 +142,19 @@ impl Color {
 
         match self {
             Byte(b) => {
-                code.push_str("\x1b[");
                 if b < &8 {
                     code.push_str(&(40 + b).to_string());
                 } else {
                     code.push_str(&(92 + b).to_string());
                 }
-
-                code.push_str("m");
+            }
+            RGB { red, green, blue } => {
+                code.push_str("48;2;");
+                code.push_str(&red.to_string());
+                code.push(';');
+                code.push_str(&green.to_string());
+                code.push(';');
+                code.push_str(&blue.to_string());
             }
         }
 

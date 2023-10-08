@@ -23,12 +23,22 @@ pr() {
     echo
     set -x
     ./cecho "$1" "${@:2}"
-    { set +x; } 2>/dev/null
-    echo
+    { set +x; } 2>/dev/null;
+        echo
 
         echo
         pause
         echo
+    }
+
+prnp() {
+
+    echo
+    set -x
+    ./cecho "$1" "${@:2}"
+    { set +x; } 2>/dev/null;
+        echo
+
     }
 
 # Clear the screen
@@ -77,6 +87,36 @@ color_features() {
 
     echo 'Or only the background'
     pr '{#/g}' 'Like this'
+
+    echo 'Arbitrary colors'
+    pr '{#w/54370f} and {#e8acca}' 'Poop' 'Toilet paper'
+
+    echo 'Real rainbow'
+    pr "$(sed 's/.*/{%1 #&} /;' <<EOF | tr -d '\n'  | cat
+ff0000
+ff4400
+ff8800
+ffc800
+f2ff00
+aeff00
+6aff00
+26ff00
+00ff1a
+00ff5e
+00ffa2
+00ffe6
+00d9ff
+0095ff
+0051ff
+000dff
+3700ff
+7700ff
+bb00ff
+ff00ff
+EOF
+)" 'X'
+
+    pr '{#ff0000}'
 }
 
 col_row() {
@@ -198,9 +238,9 @@ quality_of_life() {
 }
 
 #base
-#color_features
+color_features
 #color_detail
 #styles
-special_chars
+#special_chars
 
 

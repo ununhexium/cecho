@@ -71,7 +71,9 @@ Lower case is the normal variant, upper case is the bright variant.
 | Cyan    |  6   |   c   |  cyan   |     14      |      C       |    CYAN     |
 | White   |  7   |   w   |  white  |     15      |      W       |    WHITE    |
 
-[//]: # (TODO: Html hex codes)
+You can also use any hexadecimal color like brown: `#54370f`.
+
+The usual notation applies: `#RRGGBB` in hexadecimal format.
 
 #### Foreground/background
 
