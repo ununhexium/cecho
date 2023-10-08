@@ -48,9 +48,11 @@ base() {
 
     echo 'Basic features'
     echo
+    echo
+    echo
 
-    echo 'Canonical cecho'
-    pr '' 'Hi there!'
+    echo 'Canonical cecho: format and placeholder + arguments'
+    pr '{}' 'Hi there!'
 
     echo 'Add a color specifier with a parameter {color=...}'
     pr '{color=red}' 'Look!'
@@ -69,15 +71,19 @@ color_features() {
 
     echo 'Add colors everywhere'
     echo
+    echo
+    echo
 
     echo 'Long notation'
-    pr 'The long style notation uses a word: {color=green}' 'color='
+    pr 'A word: {color=green}' 'color='
 
     echo 'Short notation'
-    pr 'The short style notation uses a hash {color=blue}' '#'
+    pr 'A hash {#blue}' '#'
 
     echo 'The colors can be specified using 3 notations'
-    pr 'The ANSI code: {color=1}, a single letter: {color=r} and a word: {color=red}' '1' 'r' 'red'
+    prnp 'The ANSI code: {color=1}' 'color=1'
+    prnp 'A single letter: {color=r}' 'color=r'
+    pr 'A word: {color=red}' 'color=red'
 
     echo 'Background color'
     pr 'The background color can be selected using {#/blue}' '#/color'
@@ -116,7 +122,7 @@ ff00ff
 EOF
 )" 'X'
 
-    pr '{#ff0000}'
+
 }
 
 col_row() {
@@ -125,9 +131,15 @@ col_row() {
 
 color_detail() {
 
-    pr 'Uses the {#r}{#g}{#b} and {#c}{#m}{#y}{#k/w}{#w} conventions' R G B C M Y K W
+    echo 'Color features details'
+    echo
+    echo
+    echo
+
+    pr 'Uses the {#r}{#g}{#b} notation' R G B
+    pr 'and {#C}{#M}{#Y}{#k/w}{#W} notation' C M Y K W
     pr 'Long form {#r} {#g} {#b}' Red Green Blue
-    pr 'and {#c} {#m} {#y} {#k/w} {#w} conventions' Cyan Magenta Yellow Black White
+    pr 'and {#C} {#M} {#Y} {#k/w} {#W} conventions' Cyan Magenta Yellow Black White
 
     echo 'Here is a table of the available colors'
     echo -e 'Code\tLetter\tWord'
@@ -147,7 +159,7 @@ color_detail() {
     echo 'The bright bit changes the color intensity'
     echo 'To use it, use the upper case notation'
     echo -e 'Code\tLetter\tWord'
-    ./cecho '{#k/w} {#K/w}\n' black BLACK
+    ./cecho '{#8/w}\t{#k/w}\t{#K/w}\n' 8 black BLACK
     col_row 9 R RED
     col_row 10 G GREEN
     col_row 11 Y YELLOW
@@ -156,25 +168,32 @@ color_detail() {
     col_row 14 C CYAN
     col_row 15 W WHITE
 
-    echo 'The color codes come from the ANSI specification'
-    pr 'It has 4 components in 4 bits: 0b{#k/w}{#k/b}{#k/g}{#k/r}' L R G B
-    pr '{#w} {#b} {#g} {#r}' Brightness Blue Green Red
-    pr '0b{#b}{#k/g}{#k/r} = 3 is {#y}' 0 1 1 yellow
-    pr '0b{#k/b}{#g}{#k/r} = 5 is {#m}' 1 0 1 magenta
-    pr '0b{#k/b}{#k/g}{#r} = 6 is {#c}' 1 1 0 cyan
-    pr '0b{#k/b}{#k/g}{#k/r} = 7 is {#w}' 1 1 1 white
-
-    echo 'Comparison for the regular and bright color modes'
-    ./cecho '{%1#1}{%1#g}{%1#blue}' '█'
     echo
-    ./cecho '{%1#9}{%1#G}{%1#BLUE}' '█'
+    echo 'Comparison between the regular and bright color modes'
+    ./cecho '{%1#r}{%1#y}{%1#g}{%1#c}{%1#b}{%1#m}' '█'
+    echo
+    ./cecho '{%1#R}{%1#Y}{%1#G}{%1#C}{%1#B}{%1#M}' '█'
     echo
     pause
     echo
+
+    echo 'The color codes come from the ANSI specification'
+    prnp 'It has 4 components in 4 bits: 0b{#w}{#b}{#g}{#r}' L R G B
+    pr '{#w} {#b} {#g} {#r}' Brightness Blue Green Red
+    echo
+    prnp '0b{#b}{#k/g}{#k/r} = 3 is {#y}' 0 1 1 yellow
+    prnp '0b{#k/b}{#g}{#k/r} = 5 is {#m}' 1 0 1 magenta
+    prnp '0b{#k/b}{#k/g}{#r} = 6 is {#c}' 1 1 0 cyan
+    pr '0b{#k/b}{#k/g}{#k/r} = 7 is {#w}' 1 1 1 white
 }
 
 styles() {
-    echo 'The ANSI spec supports 8 styles and can be combined with colors'
+    echo 'Font styles / weight / decoration'
+    echo
+    echo 'The ANSI spec supports 8 styles and they can be combined with colors'
+    echo
+
+    pause
 
     echo Bold
     pr '{#y}, {#y !bold}' regular bold
@@ -202,10 +221,12 @@ styles() {
 
 }
 
-
 special_chars() {
 
     echo 'Use the usual c-style escape codes are supported'
+    echo
+    echo
+    echo
 
     echo 'Bell'
     pr '{#yellow}\a!' Ding
@@ -214,7 +235,7 @@ special_chars() {
     pr '{#green}\b{#r}' 'Whoo~' 'ps!'
 
     echo 'Tabulation'
-    pr '\t{#k/m}\t{#k/c}\t{#k/y}' '⇥' '⇥' '⇥'
+    pr '\t{#M}\t{#C}\t{#Y}' '⇥' '⇥' '⇥'
 
     echo 'New line'
     pr '{#g}\n{#b}' new line
@@ -231,16 +252,44 @@ special_chars() {
 }
 
 quality_of_life() {
-    echo 'mix order'
-    echo 'mix long short'
-    echo 'mix word= symbol'
+    echo 'Quality of life'
+    echo
+    echo
+    echo
+
+    echo 'Reference arguments by their index'
+    pr '{index=2} {%1}' 1 2
+
+    echo "The specifiers' order can be mixed"
+    pr '{%1#red} {#blue%2}' 1 2
+
+    echo 'Long and short notation may be mixed'
+    pr '{%1 color=red} {index=2 #b}' red blue
+
     echo 'Special cases'
+    echo
+    echo "Don't fail when empty"
+    pr '' ''
+
+    echo "Don't require arguments when there is no specifier"
+    pr 'No specification'
+
+    echo 'Just concat when there are multiple arguments'
+    pr '' 'One, ' 'two, ' 'three'
+
+    echo 'Leave space around the spec to make it more readable'
+    prnp '>{#Y/r!underline%1}<' 'Dense'
+    pr '>{ color=YELLOW/red !underline index=1 }<' 'Spaced out'
 }
 
-#base
-color_features
-#color_detail
-#styles
-#special_chars
-
-
+if [[ ! -z '$1' ]]
+then
+    $1
+else
+    base
+    color_features
+    color_detail
+    styles
+    special_chars
+    quality_of_life
+fi

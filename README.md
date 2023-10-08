@@ -15,12 +15,38 @@ The quoting and escaping in these examples is assuming that you write these comm
 
 For more examples, compile and check the `./demo.bash` examples.
 
-At the time of writing these lines, Github doesn't support coloring on its website.
-You will need to get a better Markdown reader,
-check out the Asciinerama showcase, 
-or compile and run the `demo.bash` script.
+At the time of writing these lines, Github doesn't support coloring.
+
+You will need to either 
+* checkout this repository, compile and run the [demo.sh](./demo.sh) script
+* check out the Asciinema showcase, but they also have issues with the brighter colors, some styles, ...
+* get a better Markdown reader
 
 Text examples are available in the [Examples.md](./Examples.md) file.
+
+### Basics
+
+[![asciicast](https://asciinema.org/a/gBf1QAkPN6GbWk0oJXOk2aU48.svg)](https://asciinema.org/a/gBf1QAkPN6GbWk0oJXOk2aU48)
+
+### Colors
+
+[![asciicast](https://asciinema.org/a/SbpwZ7bvBo5HZct9vd9X2Pgas.svg)](https://asciinema.org/a/SbpwZ7bvBo5HZct9vd9X2Pgas)
+
+### More colors
+
+[![asciicast](https://asciinema.org/a/N1XUudOsdjgupmBtVhQ6a20aa.svg)](https://asciinema.org/a/N1XUudOsdjgupmBtVhQ6a20aa)
+
+### Styles
+
+[![asciicast](https://asciinema.org/a/AuHNpDwKDalFHj5Z892GOSp38.svg)](https://asciinema.org/a/AuHNpDwKDalFHj5Z892GOSp38)
+
+### C-style escapes
+
+[![asciicast](https://asciinema.org/a/wR6h2fBIGcJO1xlquE5C5wG4C.svg)](https://asciinema.org/a/wR6h2fBIGcJO1xlquE5C5wG4C)
+
+### Quality of life
+
+[![asciicast](https://asciinema.org/a/ilpgpZb56mNNx1XT5M8DhLxuc.svg)](https://asciinema.org/a/ilpgpZb56mNNx1XT5M8DhLxuc)
 
 # Specification
 
