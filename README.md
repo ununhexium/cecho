@@ -28,8 +28,6 @@ Text examples are available in the [Examples.md](./Examples.md) file.
 
 [![asciicast](https://asciinema.org/a/gBf1QAkPN6GbWk0oJXOk2aU48.svg)](https://asciinema.org/a/gBf1QAkPN6GbWk0oJXOk2aU48)
 
-<script async id="asciicast-gBf1QAkPN6GbWk0oJXOk2aU48" src="https://asciinema.org/a/gBf1QAkPN6GbWk0oJXOk2aU48.js"></script>
-
 ### Colors
 
 [![asciicast](https://asciinema.org/a/SbpwZ7bvBo5HZct9vd9X2Pgas.svg)](https://asciinema.org/a/SbpwZ7bvBo5HZct9vd9X2Pgas)
