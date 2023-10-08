@@ -1,3 +1,16 @@
+
+---
+
+###### At the time of writing these lines, Github doesn't support coloring.
+
+
+You will need to either
+* checkout this repository, compile and run the [demo.sh](./demo.sh) script
+* check out the Asciinema showcase, but they also have issues with the brighter colors, some styles, ...
+* get a better Markdown reader
+
+-----
+
 ### Print any string by omitting the format
 
 ```bash
@@ -92,7 +105,7 @@ cecho '{#yellow/magenta%1!strikethrough}' 'foo'
 ```
 
 Take a deep breath, relax, and give yourself some space.
-Space and tabs are accepted.
+Tabs are accepted.
 
 ```bash
 cecho '{ #yellow/magenta   %1   !strikethrough }' 'चक्र'
