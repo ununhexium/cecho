@@ -4,77 +4,203 @@ dir=$(dirname $0)
 
 [[ -e "$dir/target/release/cecho" ]] || cd "$dir" && cargo build --release
 
-cecho="$dir/target/release/cecho"
+cd "$dir/target/release/"
 
-function pr {
+function pause {
+
+    echo
+    if [[ -z ${skip+x} ]]
+    then
+        echo -e "\e[2mPress the ANY key to continue ;P\e[0m"
+        read -n 1 -s -r
+        echo -e "\e[2J"
+    fi
+
+}
+
+pr() {
+
+    echo
     set -x
-
-    $cecho "$1" "${@:2}"
-
+    ./cecho "$1" "${@:2}"
     { set +x; } 2>/dev/null
     echo
-    echo
-    echo -e "\e[2mPress the ANY key to continue ;P\e[0m"
-    [[ -z ${skip+x} ]] && read -n 1 -s -r
-    echo -e "\e[2J"
-    echo
-}
+
+        echo
+        pause
+        echo
+    }
 
 # Clear the screen
 echo -e "\e[2J"
 
-echo 'Simple echo'
-pr '' 'Simple echo'
+base() {
 
-echo 'Omit the arguments if there is no specifier'
-pr 'Hello, world!'
+    echo 'Basic features'
+    echo
 
-echo 'Canonical echo'
-pr 'Specifier: {color=magenta}' 'value'
+    echo 'Canonical cecho'
+    pr '' 'Hi there!'
 
-echo 'Positional arguments'
-pr '{}+{}={}' 1 2 3
+    echo 'Add a color specifier with a parameter {color=...}'
+    pr '{color=red}' 'Look!'
 
-echo 'ANSI RGB with long notation'
-pr '{index=1 color=1}{index=1 color=g}{index=1 color=blue}' '█'
+    echo 'Add a color specifier with a symbol {#...}'
+    pr '{#green}' 'Easy colors!'
 
-echo 'ANSI bright RGB with short notation'
-pr '{%1#9}{%1#G}{%1#BLUE}' '█'
+    echo 'Arguments are optional if there is no specifier'
+    pr 'Hello, world!'
 
-echo 'Comparison for the regular and bright color modes'
-$cecho '{%1#1}{%1#g}{%1#blue}' '█'
-echo
-$cecho '{%1#9}{%1#G}{%1#BLUE}' '█'
-echo
-echo
+    echo 'Positional arguments'
+    pr '{} + {} = {}' 1 2 3
+}
 
-echo 'Use the usual c-style escape codes'
+color_features() {
 
-echo 'Bell'
-pr '{#yellow}\a!' Ding
+    echo 'Add colors everywhere'
+    echo
 
-echo 'Backspace'
-pr '{#green}\bps' 'Whooo'
+    echo 'Long notation'
+    pr 'The long style notation uses a word: {color=green}' 'color='
 
-echo 'Tabulation'
-pr '\t{#magenta}' 'tab'
+    echo 'Short notation'
+    pr 'The short style notation uses a hash {color=blue}' '#'
 
-echo 'New line'
-pr '{}\n{}' new line
+    echo 'The colors can be specified using 3 notations'
+    pr 'The ANSI code: {color=1}, a single letter: {color=r} and a word: {color=red}' '1' 'r' 'red'
 
-echo 'Vertival Tab'
-pr '1\v2\v3' ''
+    echo 'Background color'
+    pr 'The background color can be selected using {#/blue}' '#/color'
 
-echo 'Form feed'
-pr 'Page 1\fPage 2' ''
+    echo 'You can change the foreground and the background'
+    pr '{#blue/white}' 'Blue over White'
 
-echo 'Carriage return'
-pr '{#black/white}\r{#red}' 'I hate cecho' 'I love'
+    echo 'Or only the background'
+    pr '{#/g}' 'Like this'
+}
 
-echo 'Whitespace is allowed aroung the specifiers'
-pr '{ %1 #yellow/magenta }' 'WEIRD'
+col_row() {
+    ./cecho "{#$1}\t{#$2}\t{#$3}\n" $1 $2 $3
+}
 
-echo "The specifier's parts order doesn't matter"
-pr '{%1 #blue}' XXX
-pr '{#blue %1}' XXX
+color_detail() {
+
+    pr 'Uses the {#r}{#g}{#b} and {#c}{#m}{#y}{#k/w}{#w} conventions' R G B C M Y K W
+    pr 'Long form {#r} {#g} {#b}' Red Green Blue
+    pr 'and {#c} {#m} {#y} {#k/w} {#w} conventions' Cyan Magenta Yellow Black White
+
+    echo 'Here is a table of the available colors'
+    echo -e 'Code\tLetter\tWord'
+
+    ./cecho "{#0/white}\t{#k/white}\t{#black/white}\n" 0 k black
+    col_row 1 r red
+    col_row 2 g green
+    col_row 3 y yellow
+    col_row 4 b blue
+    col_row 5 m magenta
+    col_row 6 c cyan
+    col_row 7 w white
+
+    pause
+
+    echo
+    echo 'The bright bit changes the color intensity'
+    echo 'To use it, use the upper case notation'
+    echo -e 'Code\tLetter\tWord'
+    ./cecho '{#k/w} {#K/w}\n' black BLACK
+    col_row 9 R RED
+    col_row 10 G GREEN
+    col_row 11 Y YELLOW
+    col_row 12 B BLUE
+    col_row 13 M MAGENTA
+    col_row 14 C CYAN
+    col_row 15 W WHITE
+
+    echo 'The color codes come from the ANSI specification'
+    pr 'It has 4 components in 4 bits: 0b{#k/w}{#k/b}{#k/g}{#k/r}' L R G B
+    pr '{#w} {#b} {#g} {#r}' Brightness Blue Green Red
+    pr '0b{#b}{#k/g}{#k/r} = 3 is {#y}' 0 1 1 yellow
+    pr '0b{#k/b}{#g}{#k/r} = 5 is {#m}' 1 0 1 magenta
+    pr '0b{#k/b}{#k/g}{#r} = 6 is {#c}' 1 1 0 cyan
+    pr '0b{#k/b}{#k/g}{#k/r} = 7 is {#w}' 1 1 1 white
+
+    echo 'Comparison for the regular and bright color modes'
+    ./cecho '{%1#1}{%1#g}{%1#blue}' '█'
+    echo
+    ./cecho '{%1#9}{%1#G}{%1#BLUE}' '█'
+    echo
+    pause
+    echo
+}
+
+styles() {
+    echo 'The ANSI spec supports 8 styles and can be combined with colors'
+
+    echo Bold
+    pr '{#y}, {#y !bold}' regular bold
+
+    echo 'Dim or faint'
+    pr '{}, {!dim} or the equivalent {!faint}' regular dark faint
+
+    echo 'Italic'
+    pr '{}, {!italic}' regular 'fancy'
+
+    echo 'Underline'
+    pr '{}, {!underline}' regular underlined
+
+    echo 'Blink'
+    pr '{}, {#R !blink} ; {#k/C !blinking}' regular 'look at me' 'no, me!'
+
+    echo 'Inverted / reversed'
+    pr '{} VS {!invert} {#r !inverted} {#g !inverse} {#b !reverse} {#c !reversed}' Normy can\'t do like the others
+
+    echo 'Hidden'
+    pr '-->{!hidden}, {!invisible}<--' "Cant see me XP" spooky
+
+    echo 'Strike through'
+    pr '{}, {#r !strike} and also {#M !strikethrough}' regular wrong wrong
+
+}
+
+
+special_chars() {
+
+    echo 'Use the usual c-style escape codes are supported'
+
+    echo 'Bell'
+    pr '{#yellow}\a!' Ding
+
+    echo 'Backspace'
+    pr '{#green}\b{#r}' 'Whoo~' 'ps!'
+
+    echo 'Tabulation'
+    pr '\t{#k/m}\t{#k/c}\t{#k/y}' '⇥' '⇥' '⇥'
+
+    echo 'New line'
+    pr '{#g}\n{#b}' new line
+
+    echo 'Vertical Tab'
+    pr '1\v2\v3'
+
+    echo 'Form feed'
+    pr 'Page 1\fPage 2'
+
+    echo 'Carriage return'
+    pr '{#black/white}\r{#red}' 'I hate cecho' 'I love '
+
+}
+
+quality_of_life() {
+    echo 'mix order'
+    echo 'mix long short'
+    echo 'mix word= symbol'
+    echo 'Special cases'
+}
+
+#base
+#color_features
+#color_detail
+#styles
+special_chars
+
 

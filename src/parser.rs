@@ -269,6 +269,7 @@ mod tests {
     use crate::model::Part::{Literal, Specification};
     use crate::model::Style::{Blink, Bold, Dim, Hidden, Invert, Italic, Strikethrough, Underline};
     use crate::parser::{parse_color, parse_format, parse_format_in_default_mode, parse_spec};
+    use crate::vecs;
 
     // TODO detect invalid cases:
     // {garbage value}
@@ -322,6 +323,13 @@ mod tests {
         let specs = parse_format(&"Imbalanced {".to_string());
         let err = specs.err().unwrap();
         assert_eq!(err, "The specifiers are imbalanced: missing }".to_string());
+    }
+
+    #[test]
+    fn a_single_empty_string_as_the_single_argument_is_valid_and_does_nothing() {
+        let specs = parse_format(&"".to_string());
+        let ok = specs.ok().unwrap();
+        assert_eq!(ok.len(), 0);
     }
 
     #[test]
