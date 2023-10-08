@@ -282,7 +282,7 @@ quality_of_life() {
     pr '>{ color=YELLOW/red !underline index=1 }<' 'Spaced out'
 }
 
-if [[ ! -z '$1' ]]
+if [[ ! -z "${1+x}" ]]
 then
     $1
 else
