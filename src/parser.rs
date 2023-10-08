@@ -1,10 +1,9 @@
-use std::num::ParseIntError;
 use std::str::Chars;
 
 use lazy_static::lazy_static;
 use regex::{Match, Regex};
 
-use crate::model::{Color, Colors, Part, Style, Text};
+use crate::model::{Color, Colors, Part, Style};
 use crate::model::Part::{Literal, Specification};
 use crate::model::Style::{Blink, Bold, Dim, Hidden, Invert, Italic, Strikethrough, Underline};
 use crate::model::Text::{Indexed, Positional};
@@ -21,72 +20,43 @@ fn parse_format_in_default_mode<'a, 'b>(chars: &'a mut Chars<'a>) -> Result<Vec<
 
     while let Some(c) = chars.next() {
         match c {
-            '{' => {
-                if escaped {
-                    so_far.push(c);
-                } else {
-                    if !so_far.is_empty() {
-                        specs.push(Literal(so_far.to_string()));
-                    }
-                    so_far = String::new();
-                    let next = parse_format_in_spec_mode(chars);
-                    match next {
-                        Err(e) => return Err(e),
-                        Ok(it) => specs.push(it),
-                    }
+            '{' => if escaped {
+                so_far.push(c);
+            } else {
+                if !so_far.is_empty() {
+                    specs.push(Literal(so_far.to_string()));
+                }
+                so_far = String::new();
+                let next = parse_format_in_spec_mode(chars);
+                match next {
+                    Err(e) => return Err(e),
+                    Ok(it) => specs.push(it),
                 }
             }
-            '\\' => {
-                if escaped {
-                    so_far.push('\\');
-                    escaped = false;
-                } else {
-                    escaped = true;
-                }
+            '\\' => if escaped {
+                so_far.push('\\');
+                escaped = false;
+            } else {
+                escaped = true;
             }
-            _ => {
-                if escaped {
-                    match c {
-                        'a' => {
-                            so_far.push('\x07');
-                        }
-                        'b' => {
-                            so_far.push('\x08');
-                        }
-                        't' => {
-                            so_far.push('\x09');
-                        }
-                        'n' => {
-                            so_far.push('\n');
-                        }
-                        'v' => {
-                            so_far.push('\x0b');
-                        }
-                        'f' => {
-                            so_far.push('\x0c');
-                        }
-                        'r' => {
-                            so_far.push('\x0d');
-                        }
-                        'e' => {
-                            so_far.push('\x1b');
-                        }
-                        '}' => {
-                            so_far.push('}');
-                        }
-                        '\\' => {
-                            panic!("This should never happen, \\ is handled above.")
-                        }
-                        _ => {
-                            panic!("Invalid escape sequence: \\{}", c)
-                        }
-                    }
-                } else {
-                    so_far.push(c);
+            _ => if escaped {
+                match c {
+                    'a' => so_far.push('\x07'),
+                    'b' => so_far.push('\x08'),
+                    't' => so_far.push('\x09'),
+                    'n' => so_far.push('\n'),
+                    'v' => so_far.push('\x0b'),
+                    'f' => so_far.push('\x0c'),
+                    'r' => so_far.push('\x0d'),
+                    'e' => so_far.push('\x1b'),
+                    '}' => so_far.push('}'),
+                    '\\' => panic!("This should never happen, \\ is handled above."),
+                    _ => panic!("Invalid escape sequence: \\{}", c),
                 }
+            } else {
+                so_far.push(c);
             }
         }
-
         if c != '\\' {
             escaped = false;
         }
@@ -97,11 +67,6 @@ fn parse_format_in_default_mode<'a, 'b>(chars: &'a mut Chars<'a>) -> Result<Vec<
     }
 
     Ok(specs)
-}
-
-// TODO: extend regex to stop and the next specifiers
-lazy_static! {
-    static ref INDEX_REGEX : Regex = Regex::new("^(?<index>[0-9]+)[#%!?]?").unwrap();
 }
 
 fn parse_format_in_spec_mode<'a, 'b>(chars: &mut Chars) -> Result<Part, String> {
@@ -129,10 +94,6 @@ fn parse_format_in_spec_mode<'a, 'b>(chars: &mut Chars) -> Result<Part, String> 
     }
 
     Err("The specifiers are imbalanced: missing }".to_string())
-}
-
-lazy_static! {
-    static ref PARTS_REGEX : Regex = Regex::new("^(%(?<text>[0-9]+))?(?<color>#.+)?$").unwrap();
 }
 
 #[derive(Copy, Clone)]
@@ -163,20 +124,13 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
                 last_word.clear();
                 mode = None;
             }
-            '=' => {
+            '=' =>
                 match last_word.as_str() {
-                    "color" => {
-                        mode = Some(ColorMode)
-                    }
-                    "index" => {
-                        mode = Some(IndexMode)
-                    }
-                    "style" => {
-                        mode = Some(StyleMode)
-                    }
+                    "color" => mode = Some(ColorMode),
+                    "index" => mode = Some(IndexMode),
+                    "style" => mode = Some(StyleMode),
                     _ => panic!("Don't know how to interpret the keyword '{}' as a mode", last_word),
                 }
-            }
             _ => {
                 last_word.push(c);
 
@@ -196,11 +150,9 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
     let style_spec = parse_style(style);
     let text_spec = match text.trim() {
         "" => Positional,
-        _ => {
-            text.as_str().trim().parse::<usize>().and_then(|it| Ok(Indexed(it))).unwrap_or_else(|it|
-                panic!("Don't know how to interpret the text specification '{}'", text)
-            )
-        }
+        _ => text.as_str().trim().parse::<usize>().and_then(|it| Ok(Indexed(it))).unwrap_or_else(|it|
+            panic!("Don't know how to interpret the text specification '{}'", text)
+        )
     };
 
     Ok(
@@ -225,44 +177,61 @@ fn parse_color(so_far: &str) -> Option<Colors> {
 }
 
 lazy_static! {
-    static ref HEX_COLOR : Regex = Regex::new(r#"^(?<code>[[:xdigit:]]{6})|(?<function>rgb\([[:xdigit:]]{2},[[:xdigit:]]{2},[[:xdigit:]]{2}\))$"#).unwrap();
+    static ref HEX_COLOR : Regex = Regex::new(r#"^(?<code>[[:xdigit:]]{6})$"#).unwrap();
+    static ref DEC_COLOR : Regex = Regex::new(r#"^(?<rgb>rgb\((?<red>[[:digit:]]{1,3}),(?<green>[[:digit:]]{1,3}),(?<blue>[[:digit:]]{1,3})\))$"#).unwrap();
 }
 
 fn interpret_color(s: Match) -> Color {
     match s.as_str().trim() {
-        "0" | "k" | "black" => { Color::black() }
-        "1" | "r" | "red" => { Color::red() }
-        "2" | "g" | "green" => { Color::green() }
-        "3" | "y" | "yellow" => { Color::yellow() }
-        "4" | "b" | "blue" => { Color::blue() }
-        "5" | "m" | "magenta" => { Color::magenta() }
-        "6" | "c" | "cyan" => { Color::cyan() }
-        "7" | "w" | "white" => { Color::white() }
+        "0" | "k" | "black" => Color::black(),
+        "1" | "r" | "red" => Color::red(),
+        "2" | "g" | "green" => Color::green(),
+        "3" | "y" | "yellow" => Color::yellow(),
+        "4" | "b" | "blue" => Color::blue(),
+        "5" | "m" | "magenta" => Color::magenta(),
+        "6" | "c" | "cyan" => Color::cyan(),
+        "7" | "w" | "white" => Color::white(),
 
-        "8" | "K" | "BLACK" => { Color::bright_black() }
-        "9" | "R" | "RED" => { Color::bright_red() }
-        "10" | "G" | "GREEN" => { Color::bright_green() }
-        "11" | "Y" | "YELLOW" => { Color::bright_yellow() }
-        "12" | "B" | "BLUE" => { Color::bright_blue() }
-        "13" | "M" | "MAGENTA" => { Color::bright_magenta() }
-        "14" | "C" | "CYAN" => { Color::bright_cyan() }
-        "15" | "W" | "WHITE" => { Color::bright_white() }
+        "8" | "K" | "BLACK" => Color::bright_black(),
+        "9" | "R" | "RED" => Color::bright_red(),
+        "10" | "G" | "GREEN" => Color::bright_green(),
+        "11" | "Y" | "YELLOW" => Color::bright_yellow(),
+        "12" | "B" | "BLUE" => Color::bright_blue(),
+        "13" | "M" | "MAGENTA" => Color::bright_magenta(),
+        "14" | "C" | "CYAN" => Color::bright_cyan(),
+        "15" | "W" | "WHITE" => Color::bright_white(),
         more => {
             let captures = HEX_COLOR.captures(&more);
-            let hex_color_str = captures.and_then(|it| it.name("code"));
 
-            match hex_color_str {
-                None => { panic!("Can't find the color code in {}", more.to_string()) }
-                Some(s) => {
-                    match u32::from_str_radix(s.as_str(), 16) {
-                        Ok(value) => Color::u32_rgb(value),
-                        Err(e) => { panic!("{}", e.to_string()) }
-                    }
-                }
-                _ => todo!("Don't know how to interpret the color '{}'", s.as_str())
+            if let Some(s) = captures.and_then(|it| it.name("code")) {
+                return match u32::from_str_radix(s.as_str(), 16) {
+                    Ok(value) => Color::u32_rgb(value),
+                    Err(e) => { panic!("{}", e.to_string()) }
+                };
+            } else if let Some(capture) = DEC_COLOR.captures(&more) {
+                let red: u8 = if let Some(red_str) = capture.name("red") {
+                    parse_as_u8(red_str.as_str())
+                } else { panic!("Can't find the red component.") };
+                let green: u8 = if let Some(green_str) = capture.name("green") {
+                    parse_as_u8(green_str.as_str())
+                } else { panic!("Can't find the green component.") };
+                let blue: u8 = if let Some(blue_str) = capture.name("blue") {
+                    parse_as_u8(blue_str.as_str())
+                } else { panic!("Can't find the blue component.") };
+
+                Color::rgb(red, green, blue)
+            } else {
+                todo!("Don't know how to interpret the color '{}'", s.as_str())
             }
         }
     }
+}
+
+fn parse_as_u8(s: &str) -> u8 {
+    return match u8::from_str_radix(s, 10) {
+        Ok(value) => value,
+        Err(e) => { panic!("{}", e.to_string()) }
+    };
 }
 
 fn parse_style(style: String) -> Option<Style> {
@@ -284,13 +253,12 @@ fn parse_style(style: String) -> Option<Style> {
 
 #[cfg(test)]
 mod tests {
-    use crate::model::{Color, Colors, Part, Text};
-    use crate::model::Part::{Literal, Specification};
+    use crate::model::{Color, Colors, Part};
+    use crate::model::Part::Literal;
     use crate::model::Style::{Blink, Bold, Dim, Hidden, Invert, Italic, Strikethrough, Underline};
-    use crate::parser::{parse_color, parse_format, parse_format_in_default_mode, parse_spec};
-    use crate::vecs;
+    use crate::parser::{parse_color, parse_format, parse_spec};
 
-    // TODO detect invalid cases:
+// TODO detect invalid cases:
     // {garbage value}
     // TODO refuse to mix positional, indexed and named, only 1 of each
 
@@ -562,12 +530,10 @@ mod tests {
         test_color_spec("54370f", Color::rgb(0x54, 0x37, 0x0f));
     }
 
-    // TODO decimal notation
-    // #[test]
-    // fn can_use_rgb_in_its_full_glory_with_decimal() {
-    //     // brown #54370f
-    //     test_color_spec("rgb(84,55,15)", Color::rgb(0x54, 0x37, 0x0f));
-    // }
+    #[test]
+    fn can_use_rgb_in_its_full_glory_with_decimal() {
+        test_color_spec("rgb(84,55,15)", Color::rgb(0x54, 0x37, 0x0f));
+    }
 
     #[test]
     fn parse_background_specs() {

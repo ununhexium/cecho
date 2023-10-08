@@ -97,6 +97,9 @@ color_features() {
     echo 'Arbitrary colors'
     pr '{#w/54370f} and {#e8acca}' 'Poop' 'Toilet paper'
 
+    echo 'Decimal notation'
+    pr '{color=rgb(255,128,50) !bold}' 'Mechanical Orange'
+
     echo 'Real rainbow'
     pr "$(sed 's/.*/{%1 #&} /;' <<EOF | tr -d '\n'  | cat
 ff0000
@@ -159,7 +162,7 @@ color_detail() {
     echo 'The bright bit changes the color intensity'
     echo 'To use it, use the upper case notation'
     echo -e 'Code\tLetter\tWord'
-    ./cecho '{#8/w}\t{#k/w}\t{#K/w}\n' 8 black BLACK
+    ./cecho '{#8/w}\t{#k/w}\t{#K/w}\n' 8 K BLACK
     col_row 9 R RED
     col_row 10 G GREEN
     col_row 11 Y YELLOW
@@ -178,7 +181,7 @@ color_detail() {
     echo
 
     echo 'The color codes come from the ANSI specification'
-    prnp 'It has 4 components in 4 bits: 0b{#w}{#b}{#g}{#r}' L R G B
+    prnp 'It has 4 components in 4 bits: 0b{#w}{#b}{#g}{#r}' L B G R
     pr '{#w} {#b} {#g} {#r}' Brightness Blue Green Red
     echo
     prnp '0b{#b}{#k/g}{#k/r} = 3 is {#y}' 0 1 1 yellow

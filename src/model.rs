@@ -164,7 +164,6 @@ impl Color {
 
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum Style {
-    Reset = 0,
     Bold = 1,
     Dim = 2,
     Italic = 3,

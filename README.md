@@ -325,21 +325,16 @@ Similar to regex options `(?=...)`
 
 ## TODOs
 
-Styles: bold, underline etc.
-
 Use `{*}` to mean "and here goes all the rest of the args if there are any left"
 
 Index is 0-based or 1-based?
 
 Error message improvements: position hint
 
-Make the arguments to be formatted optional when there are no format specs
-
-
 ### Decimal formatting
 
-TODO: is there another readily available program that could do the number formatting and let me not re-implement the
-wheel?
+TODO: is there another readily available program that could do the number formatting 
+and let me not re-implement the wheel?
 
 Leave this to `printf` ?
 
