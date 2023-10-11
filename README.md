@@ -268,6 +268,18 @@ TODO: is there anything that comes close to this?
 
 If yes list here.
 
+#### DIY
+
+https://gist.github.com/WestleyK/dc71766b3ce28bb31be54b9ab7709082
+
+Fish has an easy way to set a color
+
+https://github.com/fish-shell/fish-shell/issues/2343
+
+An interesting simplification of tput calls as a Bash script
+
+https://github.com/ppo/bash-colors
+
 ## Format specifiers brainstorming
 
 All the format given below are assumed ot be enclosed in `{}`

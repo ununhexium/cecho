@@ -15,21 +15,21 @@ pub fn cecho(inputs: Vec<String>) -> Result<String, String> {
                     _ => false
                 });
 
-            /// TODO Special cases handling for more user friendliness
-            ///
-            /// cecho
-            /// Is valid and outputs nothing
-            ///
-            /// cecho ''
-            /// Is valid and outputs nothing
-            ///
-            /// cecho 'No qualifier here'
-            /// Is valid and outputs the format only as a literal.
-            ///
-            /// cecho '' 'This string is not interpreted' 'Nor is this one'
-            /// Is valid and outputs each of the strings, concatenated, on the same line
-            ///
-            /// The other cases require at least 2 arguments
+            // TODO Special cases handling for more user friendliness
+            //
+            // cecho
+            // Is valid and outputs nothing
+            //
+            // cecho ''
+            // Is valid and outputs nothing
+            //
+            // cecho 'No qualifier here'
+            // Is valid and outputs the format only as a literal.
+            //
+            // cecho '' 'This string is not interpreted' 'Nor is this one'
+            // Is valid and outputs each of the strings, concatenated, on the same line
+            //
+            // The other cases require at least 2 arguments
 
             if inputs.len() < 2 && (has_specifiers || inputs[0].is_empty()) {
                 Err("The minimum number of arguments is 2. The first argument is the format. If no formatting is necessary, use an empty string.".to_string())
