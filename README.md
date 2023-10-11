@@ -193,6 +193,29 @@ Some styles have several names.
 
 `{style=strike}`
 
+## Speed
+
+```bash
+hyperfine --shell=none 'target/release/cecho "foo {!bold color=rgb(1,2,3)} bar {style=blink index=2 #k/R} baz" "Wagamama" "Sakura"'
+```
+
+```
+Benchmark 1: target/release/cecho "foo {!bold color=rgb(1,2,3)} bar {style=blink index=2 #k/R} baz" "Wagamama" "Sakura"
+  Time (mean ± σ):       1.7 ms ±   0.2 ms    [User: 1.1 ms, System: 0.5 ms]
+  Range (min … max):     1.1 ms …   3.3 ms    1155 runs
+```
+
+Is it fast? Is it slow? Surely fast enough to satisfy your eyes' bandwidth :)
+
+## Size
+
+A bit chubby.
+
+```
+ll target/release/cecho
+-rwxrwxr-x 2 uuh uuh 2,1M Okt 11 19:46 target/release/cecho
+```
+
 ## Goals
 
 No `-` `--` `-n` `-e` etc. ambiguity as in `echo`
@@ -216,7 +239,7 @@ Format support à la printf but with modern format specifiers:
     * simple colors `{#red}`
     * reset to default after printing? `{#red!preserve}` or auto reset? 🤔
     * any color `{#A03472}`
-    * backgroud colors `{#white/red}`
+    * background colors `{#white/red}`
 * Styles: bold, italic, blink, reset, ... `{!bold}`
 * Position on screen `{@5,10}`
 
@@ -272,13 +295,17 @@ If yes list here.
 
 https://gist.github.com/WestleyK/dc71766b3ce28bb31be54b9ab7709082
 
+https://github.com/mikesart/dotfiles/blob/master/.bash_colors
+
+### Shell / Scripts
+
 Fish has an easy way to set a color
 
 https://github.com/fish-shell/fish-shell/issues/2343
 
-An interesting simplification of tput calls as a Bash script
-
 https://github.com/ppo/bash-colors
+
+https://gist.github.com/inexorabletash/9122583
 
 ## Format specifiers brainstorming
 
