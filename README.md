@@ -307,59 +307,6 @@ https://github.com/ppo/bash-colors
 
 https://gist.github.com/inexorabletash/9122583
 
-## Format specifiers brainstorming
-
-All the format given below are assumed ot be enclosed in `{}`
-
-It must be possible to easily combine the format speficifiers.
-
-Format types:
-
-* Name 1st position
-* Number format `%`
-* Color `#`
-* Position `@`
-* Style `!`
-* Option `?`
-
-```bash
-cecho '{?named}{foo@2,3#r%1.2!bold}' --foo=3.1415
-```
-
-Shows the content of foo, at the cursor row 2 column 3, in red, with 2 decimals, in bold.
-
-<pre>
-<b style="color:red;">3.14</b>
-</pre>
-
-### Name
-
-Must be first to avoid ambiguities
-
-### Number format
-
-printf style?
-
-In that case why not delegate the formatting to `printf`?
-
-### Position
-
-`@row,column`
-
-Support relative movement?
-
-### Styles
-
-`!style`
-
-TODO: continuous style (from the marker until cancelled)
-
-### Options
-
-Similar to regex options `(?=...)`
-
-`?option`
-
 ## TODOs
 
 Use `{*}` to mean "and here goes all the rest of the args if there are any left"
@@ -448,6 +395,61 @@ TODO: distinguish indexed argument from number formatting.
 <span style="color:blue;"> `003.14159` </span>
 
 TODO: what if the terminal only supports 8 colors? Find the closest color that matches?
+
+
+## Format specifiers brainstorming
+
+All the format given below are assumed ot be enclosed in `{}`
+
+It must be possible to easily combine the format specifiers.
+
+Format types:
+
+* Name 1st position
+* Number format `%`
+* Color `#`
+* Position `@`
+* Style `!`
+* Option `?`
+
+```bash
+cecho '{?named}{foo@2,3#r%1.2!bold}' --foo=3.1415
+```
+
+Shows the content of foo, at the cursor row 2 column 3, in red, with 2 decimals, in bold.
+
+<pre>
+<b style="color:red;">3.14</b>
+</pre>
+
+### Name
+
+Must be first to avoid ambiguities
+
+### Number format
+
+printf style?
+
+In that case why not delegate the formatting to `printf`?
+
+### Position
+
+`@row,column`
+
+Support relative movement?
+
+### Styles
+
+`!style`
+
+TODO: continuous style (from the marker until cancelled)
+
+### Options
+
+Similar to regex options `(?=...)`
+
+`?option`
+
 
 ## Documents and references
 
