@@ -235,8 +235,7 @@ fn parse_as_u8(s: &str) -> u8 {
 }
 
 fn parse_style(style: String) -> Option<Style> {
-    // TODO: make it not case sensitive
-    match style.as_str().trim() {
+    match style.to_lowercase().as_str().trim() {
         "bold" => Some(Bold),
         "dim" | "faint" => Some(Dim),
         "italic" => Some(Italic),

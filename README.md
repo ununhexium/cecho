@@ -133,7 +133,7 @@ cecho '{} {} {}' a b c
 To use it like a python format do
 
 ```bash
-cecho '{3} {2} {1}' a b c
+cecho '{%3} {%2} {%1}' a b c
 ``` 
 
 `c b a`
@@ -351,8 +351,6 @@ Support relative movement?
 ### Styles
 
 `!style`
-
-TODO: local style (within the {})
 
 TODO: continuous style (from the marker until cancelled)
 
