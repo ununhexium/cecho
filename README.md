@@ -88,7 +88,7 @@ Lower case is the normal variant, upper case is the bright variant.
 
 | Name    | code | short |  long   | code bright | short bright | long bright |
 |---------|:----:|:-----:|:-------:|:-----------:|:------------:|:-----------:|
-| Black   |  0   |   b   |  black  |      8      |      B       |    BLACK    |
+| Black   |  0   |   k   |  black  |      8      |      K       |    BLACK    |
 | Red     |  1   |   r   |   red   |      9      |      R       |     RED     |
 | Green   |  2   |   g   |  green  |     10      |      G       |    GREEN    |
 | Yellow  |  3   |   y   | yellow  |     11      |      Y       |   YELLOW    |
