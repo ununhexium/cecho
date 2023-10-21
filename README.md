@@ -100,6 +100,10 @@ Lower case is the normal variant, upper case is the bright variant.
 You can also use any hexadecimal color like brown: `#54370f`.
 
 The usual notation applies: `#RRGGBB` in hexadecimal format.
+The letters may be either lower or upper case.
+
+The color can also be specified with the `rgb()` function.
+It takes 3 parameters: red, green and blue ranging between 0 and 255 included.
 
 #### Foreground/background
 
@@ -138,6 +142,8 @@ cecho '{%3} {%2} {%1}' a b c
 
 `c b a`
 
+For clarity, it's not possible to mix index-based and positional arguments.
+
 ### A style
 
 Supports all the styles that the ANSI escape codes allows.
@@ -147,51 +153,63 @@ A style can be specified with the long option or the short option
 
 Some styles have several names.
 
+It's possible to combine the styles.
+
+For instance `cecho 'foo {!italic!bold!dim!blink!strike!underline#red}' bar` for maximum visibility 🌟.
+
+The options for the style specifiers are not case-sensitive.
+
+The styles can be specified in many ways to help you save time. Here are a few examples of that:
+
+```
+!bold,hidden
+!bold !hidden
+style=bold,hidden
+style=bold style=hidden
+!bh
+style=bh
+!BH
+```
+
 #### Bold
 
-`{style=bold}`
+`{!s}`
+`{style=strong}`
 
 #### Dim
 
+`{!d}`
 `{style=dim}`
-`{style=faint}`
 
 #### Italic
 
+`{!i}`
 `{style=italic}`
 
 #### Underline
 
+`{!u}`
 `{style=underline}`
 
 #### Blink
 
+`{!b}`
 `{style=blink}`
-`{style=blinking}`
 
 #### Inverted
 
-`{style=invert}`
-
-`{style=inverted}`
-
-`{style=inverse}`
-
-`{style=reverse}`
-
+`{!r}`
 `{style=reversed}`
 
 #### Hidden
 
+`{!h}`
 `{style=hidden}`
-
-`{style=invisible}`
 
 #### Strike through
 
-`{style=strikethrough}`
-
-`{style=strike}`
+`{!c}`
+`{style=crossed-out}`
 
 ## Speed
 
@@ -247,7 +265,7 @@ Format support à la printf but with modern format specifiers:
 
 Must be simple to start with and not trap people by default!
 
-Must be powerfull enough to not require extra tooling if it's easier, be it
+Must be powerful enough to not require extra tooling if it's easier, be it
 
 * bash's number formatting trick `$(([##7]v))` for format the variable v in base 7 for instance
 * printf's decimal formatting
@@ -287,6 +305,9 @@ tool that auto-color based on various criteria
 
 ### Alternatives?
 
+Alternatives: [zuncito](https://codeberg.org/lukaslauterbach/zuncito)
+a friendly C completing implementation.
+
 TODO: is there anything that comes close to this?
 
 If yes list here.
@@ -309,93 +330,36 @@ https://gist.github.com/inexorabletash/9122583
 
 ## TODOs
 
-Use `{*}` to mean "and here goes all the rest of the args if there are any left"
+Use `{@}` `{all}` to means "all the args", bash-style.
 
-Index is 0-based or 1-based?
+`cecho 'hello {%1} {@} {%1}' world foo`
 
-Error message improvements: position hint
+`hello world world foo world`
 
-### Decimal formatting
+The separator between the arguments defaults to space ` `.
 
-TODO: is there another readily available program that could do the number formatting 
-and let me not re-implement the wheel?
-
-Leave this to `printf` ?
+It's also possible to specify the separator using pipes.
 
 ```bash
-cecho '{02.02}' '9.8'
+cecho 'hello {%1} {@|, |} {%1}' 1 2 3 4
 ```
 
-`09.80`
+`1 1, 2, 3, 4 1`
 
-TODO: extends the spec to support generalized number formats
-
-https://alvinalexander.com/programming/printf-format-cheat-sheet/
-
-### In-place formatting
 
 ```bash
-cecho '{"this is blue#blue}'
+cecho 'hello {@|\||}' a b
 ```
 
-<span style="color:blue;"> `this is blue` </span>
+`a|b`
 
-```bash
-cecho "{'this is not\\#blue}"
-```
+It's possible to give a style to all the arguments at once using the previous specifiers.
 
-`this is not#blue`
+`cecho {all style=bold color=red}`
 
-### Extra opt-in features
+Will print all the arguments in red.
 
-These will break the features above and must be selected explicitly
-
-#### Named arguments
-
-```bash
-cecho '{?named}{foo} and {bar}' --foo=A --bar=B
-```
-
-`A and B`
-
-Regular behaviour:
-
-```bash
-cecho '{foo} and {bar}' --foo=A --bar=B
-```
-
-`--foo=A and --bar=B`
-
-#### Recursion
-
-This one may become unmanageable but let's see if it's possible anyway.
-
-It recursively evaluates the arguments 1 by 1, modifying the format at each evaluation.
-
-```bash
-cecho '{?recurse}' '{?named}{foo}' --foo='{03.5@blue}' '3.14159265359'
-```
-
-Step by step this is equivalent to
-
-```bash
-cecho '{!recurse}{?named}{foo}' --foo='{03.5@blue}' '3.14159265359'
-```
-
-```bash
-cecho '{!recurse}{?named}{03.5@blue}' '3.14159265359'
-```
-
-```bash
-cecho '{!recurse}{?named}3.14159'
-```
-
-TODO: distinguish indexed argument from number formatting.
-
-<span style="color:blue;"> `003.14159` </span>
-
-TODO: what if the terminal only supports 8 colors? Find the closest color that matches?
-
+## Error message improvements: position hint
 
 ## Format specifiers brainstorming
 
@@ -406,50 +370,9 @@ It must be possible to easily combine the format specifiers.
 Format types:
 
 * Name 1st position
-* Number format `%`
+* Index `%`
 * Color `#`
-* Position `@`
 * Style `!`
-* Option `?`
-
-```bash
-cecho '{?named}{foo@2,3#r%1.2!bold}' --foo=3.1415
-```
-
-Shows the content of foo, at the cursor row 2 column 3, in red, with 2 decimals, in bold.
-
-<pre>
-<b style="color:red;">3.14</b>
-</pre>
-
-### Name
-
-Must be first to avoid ambiguities
-
-### Number format
-
-printf style?
-
-In that case why not delegate the formatting to `printf`?
-
-### Position
-
-`@row,column`
-
-Support relative movement?
-
-### Styles
-
-`!style`
-
-TODO: continuous style (from the marker until cancelled)
-
-### Options
-
-Similar to regex options `(?=...)`
-
-`?option`
-
 
 ## Documents and references
 
