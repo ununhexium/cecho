@@ -278,7 +278,7 @@ fn parse_style(styles: Vec<String>) -> Vec<Style> {
             "hidden" | "h" | "invisible" => vec!(Hidden),
             "crossed-out" | "c" | "strikethrough" | "strike" => vec!(CrossedOut),
             glued => {
-                if glued.is_empty() {
+                if glued.len() < 2 {
                     panic!("Don't know how to interpret the style '{}'", style)
                 }
 
@@ -299,8 +299,12 @@ mod tests {
     use crate::parser::{parse_color, parse_format, parse_spec};
 
     // TODO detect invalid cases:
-    // {garbage value}
+    //  {garbage value}
+
     // TODO refuse to mix positional, indexed and named, only 1 of each
+
+    // TODO: test case when the style can't be parsed, like "baz"
+    //  and output an error message explaining why it's invalid
 
     fn test_ok_format(format: &str, parts: Vec<Part>) {
         let specs = parse_format(&format.to_string());
@@ -753,40 +757,38 @@ mod tests {
     fn support_flexible_styles() {
         let target_style = vec!(Strong, Hidden);
         parse_ok_spec(
-                "!strong,hidden",
-                Part::positional_styles(target_style.clone())
-            );
+            "!strong,hidden",
+            Part::positional_styles(target_style.clone())
+        );
 
-            parse_ok_spec(
-                "!strong !hidden",
-                Part::positional_styles(target_style.clone())
-            );
+        parse_ok_spec(
+            "!strong !hidden",
+            Part::positional_styles(target_style.clone())
+        );
 
-            parse_ok_spec(
-                "style=strong,hidden",
-                Part::positional_styles(target_style.clone())
-            );
+        parse_ok_spec(
+            "style=strong,hidden",
+            Part::positional_styles(target_style.clone())
+        );
 
-            parse_ok_spec(
-                "style=strong style=hidden",
-                Part::positional_styles(target_style.clone())
-            );
+        parse_ok_spec(
+            "style=strong style=hidden",
+            Part::positional_styles(target_style.clone())
+        );
 
-            parse_ok_spec(
-                "!sh",
-                Part::positional_styles(target_style.clone())
-            );
+        parse_ok_spec(
+            "!sh",
+            Part::positional_styles(target_style.clone())
+        );
 
-            parse_ok_spec(
-                "style=sh",
-                Part::positional_styles(target_style.clone())
-            );
+        parse_ok_spec(
+            "style=sh",
+            Part::positional_styles(target_style.clone())
+        );
 
-            parse_ok_spec(
-                // TODO: test case when the style can't be parsed, like "foo"
-                "!SH",
-                Part::positional_styles(target_style.clone())
-            );
-
+        parse_ok_spec(
+            "!SH",
+            Part::positional_styles(target_style.clone())
+        );
     }
 }
