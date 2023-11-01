@@ -126,7 +126,7 @@ Unlike `printf` where the order of arguments is forced,
 `cecho` may use arguments in any order with `%x` 
 where `x` is an integer referring to the arguments passed to `cecho`.
 
-To use it like `printf` do
+To use it like `printf`, do
 
 ```bash
 cecho '{} {} {}' a b c
@@ -134,7 +134,7 @@ cecho '{} {} {}' a b c
 
 `a b c`
 
-To use it like a python format do
+To select an argument by its position, do
 
 ```bash
 cecho '{%3} {%2} {%1}' a b c

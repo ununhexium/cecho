@@ -14,25 +14,27 @@ pub fn spec_to_ansi(inputs: &[String], specs: Vec<Part>) -> Result<String, Strin
                 let mut post = String::new();
 
                 // prepare to add color or style
-                if style.is_some() || color.foreground.is_some() {
+                if !style.is_empty() || color.foreground.is_some() {
                     pre.push_str("\x1b[");
                 }
 
                 // reset the color and style
-                if style.is_some() || color.foreground.is_some() || color.background.is_some() {
+                if !style.is_empty() || color.foreground.is_some() || color.background.is_some() {
                     post.push_str("\x1b[0m")
                 }
 
-                style.map(|s| { pre.push_str((s as i32).to_string().as_str()) });
+                style.iter().for_each(|s|
+                    pre.push_str((*s as i32).to_string().as_str())
+                );
 
                 color.foreground.as_ref().map(|fg| {
-                    if style.is_some() {
+                    if !style.is_empty() {
                         pre.push(';');
                     }
                     pre.push_str(&fg.escape_code());
                 });
 
-                if style.is_some() || color.foreground.is_some() {
+                if !style.is_empty() || color.foreground.is_some() {
                     pre.push('m');
                 }
 
@@ -171,4 +173,5 @@ mod tests {
             ),
             "##\x1b[48;2;84;55;15mPoop\x1b[0m##");
     }
+
 }

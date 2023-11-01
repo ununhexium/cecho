@@ -5,7 +5,7 @@ use regex::{Match, Regex};
 
 use crate::model::{Color, Colors, Part, Style};
 use crate::model::Part::{Literal, Specification};
-use crate::model::Style::{Blink, Bold, Dim, Hidden, Invert, Italic, Strikethrough, Underline};
+use crate::model::Style::{Absent, Blink, Bold, Dim, Hidden, Invert, Italic, Strikethrough, Underline};
 use crate::model::Text::{Indexed, Positional};
 use crate::parser::ParserMode::{ColorMode, IndexMode, StyleMode};
 
@@ -234,17 +234,17 @@ fn parse_as_u8(s: &str) -> u8 {
     };
 }
 
-fn parse_style(style: String) -> Option<Style> {
+fn parse_style(style: String) -> Vec<Style> {
     match style.to_lowercase().as_str().trim() {
-        "bold" => Some(Bold),
-        "dim" | "faint" => Some(Dim),
-        "italic" => Some(Italic),
-        "underline" => Some(Underline),
-        "blink" | "blinking" => Some(Blink),
-        "invert" | "inverted" | "inverse" | "reversed" | "reverse" => Some(Invert),
-        "hidden" | "invisible" => Some(Hidden),
-        "strikethrough" | "strike" => Some(Strikethrough),
-        "" => None,
+        "bold" => vec!(Bold),
+        "dim" | "faint" => vec!(Dim),
+        "italic" => vec!(Italic),
+        "underline" => vec!(Underline),
+        "blink" | "blinking" => vec!(Blink),
+        "invert" | "inverted" | "inverse" | "reversed" | "reverse" => vec!(Invert),
+        "hidden" | "invisible" => vec!(Hidden),
+        "strikethrough" | "strike" => vec!(Strikethrough),
+        "" => vec!(),
         _ => panic!("Don't know how to interpret the style '{}'", style),
     }
 }
@@ -659,4 +659,12 @@ mod tests {
         parse_ok_spec("!strikethrough", Part::positional_style(Strikethrough));
         parse_ok_spec("!strike", Part::positional_style(Strikethrough));
     }
+
+    // #[test]
+    // fn style_overload() {
+    //     parse_ok_spec(
+    //         "!italic!bold!dim!blink!strike!hidden!underline#red",
+    //         Part::positional_styles(vec!(Italic, Bold, Dim, Blink, Hidden, Underline)),
+    //     )
+    // }
 }

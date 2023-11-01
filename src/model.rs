@@ -9,7 +9,7 @@ pub enum Part {
     Specification {
         text: Text,
         color: Colors,
-        style: Option<Style>,
+        style: Vec<Style>,
     },
 }
 
@@ -18,22 +18,25 @@ impl Part {
         Literal(text.to_string())
     }
     pub fn positional() -> Self {
-        Specification { text: Positional, color: Colors::none(), style: None }
+        Specification { text: Positional, color: Colors::none(), style: vec!() }
     }
     pub fn positional_color(color: Color) -> Self {
-        Specification { text: Positional, color: Colors::new_fg(color), style: None }
+        Specification { text: Positional, color: Colors::new_fg(color), style: vec!() }
     }
     pub fn positional_background_color(color: Color) -> Self {
-        Specification { text: Positional, color: Colors::new_bg(color), style: None }
+        Specification { text: Positional, color: Colors::new_bg(color), style: vec!() }
     }
     pub fn positional_style(style: Style) -> Self {
-        Specification { text: Positional, color: Colors::none(), style: Some(style) }
+        Specification { text: Positional, color: Colors::none(), style: vec!(style) }
+    }
+    pub fn positional_styles(styles: Vec<Style>) -> Self {
+        Specification { text: Positional, color: Colors::none(), style: styles }
     }
     pub const fn indexed(index: usize) -> Self {
-        Specification { text: Indexed(index), color: Colors::none(), style: None }
+        Specification { text: Indexed(index), color: Colors::none(), style: vec!() }
     }
     pub const fn indexed_color(index: usize, color: Colors) -> Self {
-        Specification { text: Indexed(index), color, style: None }
+        Specification { text: Indexed(index), color, style: vec!() }
     }
 }
 
@@ -164,6 +167,7 @@ impl Color {
 
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum Style {
+    Absent = 0,
     Bold = 1,
     Dim = 2,
     Italic = 3,
