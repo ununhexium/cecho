@@ -136,9 +136,18 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
             }
             '=' =>
                 match last_word.as_str() {
-                    "color" => mode = Some(ColorMode),
-                    "index" => mode = Some(IndexMode),
-                    "style" => mode = Some(StyleMode),
+                    "color" => {
+                        push_style(&mut style, &mut styles);
+                        mode = Some(ColorMode)
+                    },
+                    "index" => {
+                        push_style(&mut style, &mut styles);
+                        mode = Some(IndexMode)
+                    },
+                    "style" => {
+                        push_style(&mut style, &mut styles);
+                        mode = Some(StyleMode)
+                    },
                     _ => panic!("Don't know how to interpret the keyword '{}' as a mode", last_word),
                 }
             _ => {
@@ -254,17 +263,28 @@ fn parse_as_u8(s: &str) -> u8 {
 }
 
 fn parse_style(styles: Vec<String>) -> Vec<Style> {
-    styles.iter().map(|style|
+    let normalized: Vec<String> = styles.iter().flat_map(|s|
+        s.split(',').map(|it| it.to_string()).collect::<Vec<String>>()
+    ).collect();
+
+    normalized.iter().flat_map(|style|
         match style.to_lowercase().as_str().trim() {
-            "strong" | "s" | "bold" => Strong,
-            "dim" | "d" | "faint" => Dim,
-            "italic" | "i" => Italic,
-            "underline" | "u" => Underline,
-            "blink" | "b" | "blinking" => Blink,
-            "reversed" | "r" | "reverse" | "invert" | "inverted" | "inverse"  => Reversed,
-            "hidden" | "h" | "invisible" => Hidden,
-            "crossed-out" | "c" | "strikethrough" | "strike" => CrossedOut,
-            _ => panic!("Don't know how to interpret the style '{}'", style),
+            "strong" | "s" | "bold" => vec!(Strong),
+            "dim" | "d" | "faint" => vec!(Dim),
+            "italic" | "i" => vec!(Italic),
+            "underline" | "u" => vec!(Underline),
+            "blink" | "b" | "blinking" => vec!(Blink),
+            "reversed" | "r" | "reverse" | "invert" | "inverted" | "inverse" => vec!(Reversed),
+            "hidden" | "h" | "invisible" => vec!(Hidden),
+            "crossed-out" | "c" | "strikethrough" | "strike" => vec!(CrossedOut),
+            glued => {
+                if glued.is_empty() {
+                    panic!("Don't know how to interpret the style '{}'", style)
+                }
+
+                // try to interpret it as individual chars
+                parse_style(glued.chars().map(|it| it.to_string()).collect())
+            },
         }
     ).collect()
 }
@@ -278,7 +298,7 @@ mod tests {
     use crate::model::Text::Positional;
     use crate::parser::{parse_color, parse_format, parse_spec};
 
-// TODO detect invalid cases:
+    // TODO detect invalid cases:
     // {garbage value}
     // TODO refuse to mix positional, indexed and named, only 1 of each
 
@@ -724,8 +744,49 @@ mod tests {
             Specification {
                 text: Positional,
                 color: Colors::new(Color::red(), Color::blue()),
-                styles: vec!(Italic, Strong, Dim, Blink, CrossedOut, Hidden, Underline)
+                styles: vec!(Italic, Strong, Dim, Blink, CrossedOut, Hidden, Underline),
             },
         )
+    }
+
+    #[test]
+    fn support_flexible_styles() {
+        let target_style = vec!(Strong, Hidden);
+        parse_ok_spec(
+                "!strong,hidden",
+                Part::positional_styles(target_style.clone())
+            );
+
+            parse_ok_spec(
+                "!strong !hidden",
+                Part::positional_styles(target_style.clone())
+            );
+
+            parse_ok_spec(
+                "style=strong,hidden",
+                Part::positional_styles(target_style.clone())
+            );
+
+            parse_ok_spec(
+                "style=strong style=hidden",
+                Part::positional_styles(target_style.clone())
+            );
+
+            parse_ok_spec(
+                "!sh",
+                Part::positional_styles(target_style.clone())
+            );
+
+            parse_ok_spec(
+                "style=sh",
+                Part::positional_styles(target_style.clone())
+            );
+
+            parse_ok_spec(
+                // TODO: test case when the style can't be parsed, like "foo"
+                "!SH",
+                Part::positional_styles(target_style.clone())
+            );
+
     }
 }
