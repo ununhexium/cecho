@@ -151,6 +151,19 @@ Supports all the styles that the ANSI escape codes allows.
 A style can be specified with the long option or the short option 
 `{style=bold}` or `{!bold}`.
 
+A style can be specified with a single letter.
+
+|  Long name  |               Alternatives               | Short name |
+|:-----------:|:----------------------------------------:|:----------:|
+|   strong    |                   bold                   |     s      |
+|     dim     |                  faint                   |     d      |
+|   italic    |                                          |     i      |
+|  underline  |               underscored                |     u      |
+|    blink    |                 blinking                 |     b      |
+|  reversed   | inverse inversed invert inverted reverse |     r      |
+|   hidden    |                invisible                 |     h      |
+| crossed-out |           strike strikethrough           |     c      |
+
 Some styles have several names.
 
 It's possible to combine the styles.
@@ -176,10 +189,18 @@ style=bh
 `{!s}`
 `{style=strong}`
 
+Also accepted:
+
+`{style=bold}`
+
 #### Dim
 
 `{!d}`
 `{style=dim}`
+
+Also accepted:
+
+`{style=faint}`
 
 #### Italic
 
@@ -196,20 +217,42 @@ style=bh
 `{!b}`
 `{style=blink}`
 
-#### Inverted
+Also accepted:
+
+`{style=blinking}`
+
+#### Reversed
 
 `{!r}`
 `{style=reversed}`
+
+Also accepted:
+
+`{style=inverted}`
+`{style=invert}`
+`{style=reversed}`
+`{style=reverse}`
+
 
 #### Hidden
 
 `{!h}`
 `{style=hidden}`
 
-#### Strike through
+Also accepted:
+
+`{style=invisible}`
+
+#### Crossed out
 
 `{!c}`
 `{style=crossed-out}`
+
+
+Also accepted:
+
+`{style=strikethrough}`
+`{style=strike}`
 
 ## Multiple arguments
 

@@ -256,14 +256,14 @@ fn parse_as_u8(s: &str) -> u8 {
 fn parse_style(styles: Vec<String>) -> Vec<Style> {
     styles.iter().map(|style|
         match style.to_lowercase().as_str().trim() {
-            "bold" => Strong,
-            "dim" | "faint" => Dim,
-            "italic" => Italic,
-            "underline" => Underline,
-            "blink" | "blinking" => Blink,
-            "invert" | "inverted" | "inverse" | "reversed" | "reverse" => Reversed,
-            "hidden" | "invisible" => Hidden,
-            "strikethrough" | "strike" => CrossedOut,
+            "strong" | "s" | "bold" => Strong,
+            "dim" | "d" | "faint" => Dim,
+            "italic" | "i" => Italic,
+            "underline" | "u" => Underline,
+            "blink" | "b" | "blinking" => Blink,
+            "reversed" | "r" | "reverse" | "invert" | "inverted" | "inverse"  => Reversed,
+            "hidden" | "h" | "invisible" => Hidden,
+            "crossed-out" | "c" | "strikethrough" | "strike" => CrossedOut,
             _ => panic!("Don't know how to interpret the style '{}'", style),
         }
     ).collect()
@@ -619,7 +619,12 @@ mod tests {
 
     #[test]
     fn parse_bold_style() {
+        parse_ok_spec("style=strong", Part::positional_style(Strong));
+        parse_ok_spec("style=s", Part::positional_style(Strong));
         parse_ok_spec("style=bold", Part::positional_style(Strong));
+
+        parse_ok_spec("!strong", Part::positional_style(Strong));
+        parse_ok_spec("!s", Part::positional_style(Strong));
         parse_ok_spec("!bold", Part::positional_style(Strong));
     }
 
@@ -627,56 +632,79 @@ mod tests {
     fn parse_dim_style() {
         parse_ok_spec("style=dim", Part::positional_style(Dim));
         parse_ok_spec("style=faint", Part::positional_style(Dim));
+        parse_ok_spec("style=d", Part::positional_style(Dim));
+
         parse_ok_spec("!dim", Part::positional_style(Dim));
         parse_ok_spec("!faint", Part::positional_style(Dim));
+        parse_ok_spec("!d", Part::positional_style(Dim));
     }
 
     #[test]
     fn parse_italic_style() {
         parse_ok_spec("style=italic", Part::positional_style(Italic));
+        parse_ok_spec("style=i", Part::positional_style(Italic));
+
         parse_ok_spec("!italic", Part::positional_style(Italic));
+        parse_ok_spec("!i", Part::positional_style(Italic));
     }
 
     #[test]
     fn parse_underline_style() {
         parse_ok_spec("style=underline", Part::positional_style(Underline));
+        parse_ok_spec("style=u", Part::positional_style(Underline));
+
         parse_ok_spec("!underline", Part::positional_style(Underline));
+        parse_ok_spec("!u", Part::positional_style(Underline));
     }
 
     #[test]
     fn parse_blink_style() {
         parse_ok_spec("style=blink", Part::positional_style(Blink));
+        parse_ok_spec("style=b", Part::positional_style(Blink));
         parse_ok_spec("style=blinking", Part::positional_style(Blink));
+
         parse_ok_spec("!blink", Part::positional_style(Blink));
+        parse_ok_spec("!b", Part::positional_style(Blink));
         parse_ok_spec("!blinking", Part::positional_style(Blink));
     }
 
     #[test]
     fn parse_invert_style() {
+        parse_ok_spec("style=reversed", Part::positional_style(Reversed));
+        parse_ok_spec("style=r", Part::positional_style(Reversed));
+        parse_ok_spec("style=reverse", Part::positional_style(Reversed));
         parse_ok_spec("style=invert", Part::positional_style(Reversed));
         parse_ok_spec("style=inverted", Part::positional_style(Reversed));
         parse_ok_spec("style=inverse", Part::positional_style(Reversed));
-        parse_ok_spec("style=reverse", Part::positional_style(Reversed));
-        parse_ok_spec("style=reversed", Part::positional_style(Reversed));
+
+        parse_ok_spec("!reversed", Part::positional_style(Reversed));
+        parse_ok_spec("!r", Part::positional_style(Reversed));
+        parse_ok_spec("!reverse", Part::positional_style(Reversed));
         parse_ok_spec("!invert", Part::positional_style(Reversed));
         parse_ok_spec("!inverted", Part::positional_style(Reversed));
         parse_ok_spec("!inverse", Part::positional_style(Reversed));
-        parse_ok_spec("!reverse", Part::positional_style(Reversed));
-        parse_ok_spec("!reversed", Part::positional_style(Reversed));
     }
 
     #[test]
     fn parse_hidden_style() {
         parse_ok_spec("style=hidden", Part::positional_style(Hidden));
+        parse_ok_spec("style=h", Part::positional_style(Hidden));
         parse_ok_spec("style=invisible", Part::positional_style(Hidden));
+
         parse_ok_spec("!hidden", Part::positional_style(Hidden));
+        parse_ok_spec("!h", Part::positional_style(Hidden));
         parse_ok_spec("!invisible", Part::positional_style(Hidden));
     }
 
     #[test]
     fn parse_strikethrough_style() {
+        parse_ok_spec("style=crossed-out", Part::positional_style(CrossedOut));
+        parse_ok_spec("style=c", Part::positional_style(CrossedOut));
         parse_ok_spec("style=strikethrough", Part::positional_style(CrossedOut));
         parse_ok_spec("style=strike", Part::positional_style(CrossedOut));
+
+        parse_ok_spec("!crossed-out", Part::positional_style(CrossedOut));
+        parse_ok_spec("!c", Part::positional_style(CrossedOut));
         parse_ok_spec("!strikethrough", Part::positional_style(CrossedOut));
         parse_ok_spec("!strike", Part::positional_style(CrossedOut));
     }
