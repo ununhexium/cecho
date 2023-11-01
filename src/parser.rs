@@ -5,7 +5,7 @@ use regex::{Match, Regex};
 
 use crate::model::{Color, Colors, Part, Style};
 use crate::model::Part::{Literal, Specification};
-use crate::model::Style::{Absent, Blink, Bold, Dim, Hidden, Invert, Italic, Strikethrough, Underline};
+use crate::model::Style::{Absent, Blink, Strong, Dim, Hidden, Reversed, Italic, CrossedOut, Underline};
 use crate::model::Text::{Indexed, Positional};
 use crate::parser::ParserMode::{ColorMode, IndexMode, StyleMode};
 
@@ -256,14 +256,14 @@ fn parse_as_u8(s: &str) -> u8 {
 fn parse_style(styles: Vec<String>) -> Vec<Style> {
     styles.iter().map(|style|
         match style.to_lowercase().as_str().trim() {
-            "bold" => Bold,
+            "bold" => Strong,
             "dim" | "faint" => Dim,
             "italic" => Italic,
             "underline" => Underline,
             "blink" | "blinking" => Blink,
-            "invert" | "inverted" | "inverse" | "reversed" | "reverse" => Invert,
+            "invert" | "inverted" | "inverse" | "reversed" | "reverse" => Reversed,
             "hidden" | "invisible" => Hidden,
-            "strikethrough" | "strike" => Strikethrough,
+            "strikethrough" | "strike" => CrossedOut,
             _ => panic!("Don't know how to interpret the style '{}'", style),
         }
     ).collect()
@@ -274,7 +274,7 @@ fn parse_style(styles: Vec<String>) -> Vec<Style> {
 mod tests {
     use crate::model::{Color, Colors, Part};
     use crate::model::Part::{Literal, Specification};
-    use crate::model::Style::{Blink, Bold, Dim, Hidden, Invert, Italic, Strikethrough, Underline};
+    use crate::model::Style::{Blink, Strong, Dim, Hidden, Reversed, Italic, CrossedOut, Underline};
     use crate::model::Text::Positional;
     use crate::parser::{parse_color, parse_format, parse_spec};
 
@@ -361,12 +361,12 @@ mod tests {
 
     #[test]
     fn the_symbol_for_the_font_style_is_exclamation_mark() {
-        test_ok_format("{!bold}", vec!(Part::positional_style(Bold)));
+        test_ok_format("{!bold}", vec!(Part::positional_style(Strong)));
     }
 
     #[test]
     fn the_name_for_the_font_style_is_style() {
-        test_ok_format("{style=bold}", vec!(Part::positional_style(Bold)));
+        test_ok_format("{style=bold}", vec!(Part::positional_style(Strong)));
     }
 
     fn parse_ok_spec(spec: &str, expected: Part) {
@@ -619,8 +619,8 @@ mod tests {
 
     #[test]
     fn parse_bold_style() {
-        parse_ok_spec("style=bold", Part::positional_style(Bold));
-        parse_ok_spec("!bold", Part::positional_style(Bold));
+        parse_ok_spec("style=bold", Part::positional_style(Strong));
+        parse_ok_spec("!bold", Part::positional_style(Strong));
     }
 
     #[test]
@@ -653,16 +653,16 @@ mod tests {
 
     #[test]
     fn parse_invert_style() {
-        parse_ok_spec("style=invert", Part::positional_style(Invert));
-        parse_ok_spec("style=inverted", Part::positional_style(Invert));
-        parse_ok_spec("style=inverse", Part::positional_style(Invert));
-        parse_ok_spec("style=reverse", Part::positional_style(Invert));
-        parse_ok_spec("style=reversed", Part::positional_style(Invert));
-        parse_ok_spec("!invert", Part::positional_style(Invert));
-        parse_ok_spec("!inverted", Part::positional_style(Invert));
-        parse_ok_spec("!inverse", Part::positional_style(Invert));
-        parse_ok_spec("!reverse", Part::positional_style(Invert));
-        parse_ok_spec("!reversed", Part::positional_style(Invert));
+        parse_ok_spec("style=invert", Part::positional_style(Reversed));
+        parse_ok_spec("style=inverted", Part::positional_style(Reversed));
+        parse_ok_spec("style=inverse", Part::positional_style(Reversed));
+        parse_ok_spec("style=reverse", Part::positional_style(Reversed));
+        parse_ok_spec("style=reversed", Part::positional_style(Reversed));
+        parse_ok_spec("!invert", Part::positional_style(Reversed));
+        parse_ok_spec("!inverted", Part::positional_style(Reversed));
+        parse_ok_spec("!inverse", Part::positional_style(Reversed));
+        parse_ok_spec("!reverse", Part::positional_style(Reversed));
+        parse_ok_spec("!reversed", Part::positional_style(Reversed));
     }
 
     #[test]
@@ -675,17 +675,17 @@ mod tests {
 
     #[test]
     fn parse_strikethrough_style() {
-        parse_ok_spec("style=strikethrough", Part::positional_style(Strikethrough));
-        parse_ok_spec("style=strike", Part::positional_style(Strikethrough));
-        parse_ok_spec("!strikethrough", Part::positional_style(Strikethrough));
-        parse_ok_spec("!strike", Part::positional_style(Strikethrough));
+        parse_ok_spec("style=strikethrough", Part::positional_style(CrossedOut));
+        parse_ok_spec("style=strike", Part::positional_style(CrossedOut));
+        parse_ok_spec("!strikethrough", Part::positional_style(CrossedOut));
+        parse_ok_spec("!strike", Part::positional_style(CrossedOut));
     }
 
     #[test]
     fn style_overload() {
         parse_ok_spec(
             "!italic!bold!dim!blink!strike!hidden!underline",
-            Part::positional_styles(vec!(Italic, Bold, Dim, Blink, Strikethrough, Hidden, Underline)),
+            Part::positional_styles(vec!(Italic, Strong, Dim, Blink, CrossedOut, Hidden, Underline)),
         )
     }
 
@@ -696,7 +696,7 @@ mod tests {
             Specification {
                 text: Positional,
                 color: Colors::new(Color::red(), Color::blue()),
-                styles: vec!(Italic, Bold, Dim, Blink, Strikethrough, Hidden, Underline)
+                styles: vec!(Italic, Strong, Dim, Blink, CrossedOut, Hidden, Underline)
             },
         )
     }

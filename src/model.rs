@@ -168,12 +168,12 @@ impl Color {
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum Style {
     Absent = 0,
-    Bold = 1,
+    Strong = 1,
     Dim = 2,
     Italic = 3,
     Underline = 4,
     Blink = 5,
-    Invert = 7,
+    Reversed = 7,
     Hidden = 8,
-    Strikethrough = 9,
+    CrossedOut = 9,
 }

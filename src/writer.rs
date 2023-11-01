@@ -71,7 +71,7 @@ pub fn spec_to_ansi(inputs: &[String], specs: Vec<Part>) -> Result<String, Strin
 #[cfg(test)]
 mod tests {
     use crate::model::{Color, Colors, Part};
-    use crate::model::Style::{Blink, Bold};
+    use crate::model::Style::{Blink, Strong};
     use crate::vecs;
     use crate::writer::spec_to_ansi;
 
@@ -132,7 +132,7 @@ mod tests {
             vecs!("Bald"),
             vec!(
                 Part::literal("##"),
-                Part::positional_style(Bold),
+                Part::positional_style(Strong),
                 Part::literal("##"),
             ),
             "##\x1b[1mBald\x1b[0m##");
