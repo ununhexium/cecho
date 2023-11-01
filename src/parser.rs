@@ -113,13 +113,23 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
     let mut text = String::new();
     let mut color = String::new();
     let mut style = String::new();
+    let mut styles: Vec<String> = Vec::new();
     let mut last_word = String::new();
 
     for c in spec.chars() {
         match c {
-            '#' => mode = Some(ColorMode),
-            '%' => mode = Some(IndexMode),
-            '!' => mode = Some(StyleMode),
+            '#' => {
+                push_style(&mut style, &mut styles);
+                mode = Some(ColorMode);
+            }
+            '%' => {
+                push_style(&mut style, &mut styles);
+                mode = Some(IndexMode);
+            }
+            '!' => {
+                push_style(&mut style, &mut styles);
+                mode = Some(StyleMode);
+            }
             ' ' | '\t' => {
                 last_word.clear();
                 mode = None;
@@ -146,8 +156,10 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
         }
     }
 
+    push_style(&mut style, &mut styles);
+
     let color_spec: Option<Colors> = parse_color(&color.as_str());
-    let style_spec = parse_style(style);
+    let style_spec = parse_style(styles);
     let text_spec = match text.trim() {
         "" => Positional,
         _ => text.as_str().trim().parse::<usize>().and_then(|it| Ok(Indexed(it))).unwrap_or_else(|it|
@@ -159,9 +171,16 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
         Specification {
             text: text_spec,
             color: color_spec.unwrap_or_else(|| Colors::none()),
-            style: style_spec,
+            styles: style_spec,
         }
     )
+}
+
+fn push_style(mut style: &mut String, styles: &mut Vec<String>) {
+    if (!style.is_empty()) {
+        styles.push(style.clone());
+        style.clear();
+    }
 }
 
 lazy_static! {
@@ -234,27 +253,29 @@ fn parse_as_u8(s: &str) -> u8 {
     };
 }
 
-fn parse_style(style: String) -> Vec<Style> {
-    match style.to_lowercase().as_str().trim() {
-        "bold" => vec!(Bold),
-        "dim" | "faint" => vec!(Dim),
-        "italic" => vec!(Italic),
-        "underline" => vec!(Underline),
-        "blink" | "blinking" => vec!(Blink),
-        "invert" | "inverted" | "inverse" | "reversed" | "reverse" => vec!(Invert),
-        "hidden" | "invisible" => vec!(Hidden),
-        "strikethrough" | "strike" => vec!(Strikethrough),
-        "" => vec!(),
-        _ => panic!("Don't know how to interpret the style '{}'", style),
-    }
+fn parse_style(styles: Vec<String>) -> Vec<Style> {
+    styles.iter().map(|style|
+        match style.to_lowercase().as_str().trim() {
+            "bold" => Bold,
+            "dim" | "faint" => Dim,
+            "italic" => Italic,
+            "underline" => Underline,
+            "blink" | "blinking" => Blink,
+            "invert" | "inverted" | "inverse" | "reversed" | "reverse" => Invert,
+            "hidden" | "invisible" => Hidden,
+            "strikethrough" | "strike" => Strikethrough,
+            _ => panic!("Don't know how to interpret the style '{}'", style),
+        }
+    ).collect()
 }
 
 
 #[cfg(test)]
 mod tests {
     use crate::model::{Color, Colors, Part};
-    use crate::model::Part::Literal;
+    use crate::model::Part::{Literal, Specification};
     use crate::model::Style::{Blink, Bold, Dim, Hidden, Invert, Italic, Strikethrough, Underline};
+    use crate::model::Text::Positional;
     use crate::parser::{parse_color, parse_format, parse_spec};
 
 // TODO detect invalid cases:
@@ -660,11 +681,23 @@ mod tests {
         parse_ok_spec("!strike", Part::positional_style(Strikethrough));
     }
 
-    // #[test]
-    // fn style_overload() {
-    //     parse_ok_spec(
-    //         "!italic!bold!dim!blink!strike!hidden!underline#red",
-    //         Part::positional_styles(vec!(Italic, Bold, Dim, Blink, Hidden, Underline)),
-    //     )
-    // }
+    #[test]
+    fn style_overload() {
+        parse_ok_spec(
+            "!italic!bold!dim!blink!strike!hidden!underline",
+            Part::positional_styles(vec!(Italic, Bold, Dim, Blink, Strikethrough, Hidden, Underline)),
+        )
+    }
+
+    #[test]
+    fn style_overload_with_colors() {
+        parse_ok_spec(
+            "!italic!bold!dim#red/blue!blink!strike!hidden!underline",
+            Specification {
+                text: Positional,
+                color: Colors::new(Color::red(), Color::blue()),
+                styles: vec!(Italic, Bold, Dim, Blink, Strikethrough, Hidden, Underline)
+            },
+        )
+    }
 }

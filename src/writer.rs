@@ -9,7 +9,7 @@ pub fn spec_to_ansi(inputs: &[String], specs: Vec<Part>) -> Result<String, Strin
     let result = specs.iter().map(|spec|
         match spec {
             Literal(literal) => { literal.to_string() }
-            Specification { text: selector, color, style } => {
+            Specification { text: selector, color, styles: style } => {
                 let mut pre = String::new();
                 let mut post = String::new();
 

@@ -9,7 +9,7 @@ pub enum Part {
     Specification {
         text: Text,
         color: Colors,
-        style: Vec<Style>,
+        styles: Vec<Style>,
     },
 }
 
@@ -18,25 +18,25 @@ impl Part {
         Literal(text.to_string())
     }
     pub fn positional() -> Self {
-        Specification { text: Positional, color: Colors::none(), style: vec!() }
+        Specification { text: Positional, color: Colors::none(), styles: vec!() }
     }
     pub fn positional_color(color: Color) -> Self {
-        Specification { text: Positional, color: Colors::new_fg(color), style: vec!() }
+        Specification { text: Positional, color: Colors::new_fg(color), styles: vec!() }
     }
     pub fn positional_background_color(color: Color) -> Self {
-        Specification { text: Positional, color: Colors::new_bg(color), style: vec!() }
+        Specification { text: Positional, color: Colors::new_bg(color), styles: vec!() }
     }
     pub fn positional_style(style: Style) -> Self {
-        Specification { text: Positional, color: Colors::none(), style: vec!(style) }
+        Specification { text: Positional, color: Colors::none(), styles: vec!(style) }
     }
     pub fn positional_styles(styles: Vec<Style>) -> Self {
-        Specification { text: Positional, color: Colors::none(), style: styles }
+        Specification { text: Positional, color: Colors::none(), styles: styles }
     }
     pub const fn indexed(index: usize) -> Self {
-        Specification { text: Indexed(index), color: Colors::none(), style: vec!() }
+        Specification { text: Indexed(index), color: Colors::none(), styles: vec!() }
     }
     pub const fn indexed_color(index: usize, color: Colors) -> Self {
-        Specification { text: Indexed(index), color, style: vec!() }
+        Specification { text: Indexed(index), color, styles: vec!() }
     }
 }
 

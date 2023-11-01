@@ -10,7 +10,7 @@ pub fn cecho(inputs: Vec<String>) -> Result<String, String> {
         Ok(specs) => {
             let has_specifiers = specs.iter().any(|it|
                 match it {
-                    Specification { text: _, color: _, style: _ } => true,
+                    Specification { text: _, color: _, styles: _ } => true,
                     _ => false
                 });
 
