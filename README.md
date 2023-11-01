@@ -211,6 +211,38 @@ style=bh
 `{!c}`
 `{style=crossed-out}`
 
+## Multiple arguments
+
+Use `{@}` `{all}` to means "all the args", bash-style.
+
+`cecho 'hello {%1} {@} {%1}' world foo`
+
+`hello world world foo world`
+
+The separator between the arguments defaults to space ` `.
+
+It's also possible to specify the separator using pipes.
+
+```bash
+cecho 'hello {%1} {@|, |} {%1}' 1 2 3 4
+```
+
+`1 1, 2, 3, 4 1`
+
+
+```bash
+cecho 'hello {@|\||}' a b
+```
+
+`a|b`
+
+It's possible to give a style to all the arguments at once using the previous specifiers.
+
+`cecho {all style=bold color=red}`
+
+Will print all the arguments in red.
+
+
 ## Speed
 
 ```bash
@@ -330,34 +362,7 @@ https://gist.github.com/inexorabletash/9122583
 
 ## TODOs
 
-Use `{@}` `{all}` to means "all the args", bash-style.
-
-`cecho 'hello {%1} {@} {%1}' world foo`
-
-`hello world world foo world`
-
-The separator between the arguments defaults to space ` `.
-
-It's also possible to specify the separator using pipes.
-
-```bash
-cecho 'hello {%1} {@|, |} {%1}' 1 2 3 4
-```
-
-`1 1, 2, 3, 4 1`
-
-
-```bash
-cecho 'hello {@|\||}' a b
-```
-
-`a|b`
-
-It's possible to give a style to all the arguments at once using the previous specifiers.
-
-`cecho {all style=bold color=red}`
-
-Will print all the arguments in red.
+Slices for `{@}` `{@[2:]` sprints everything except the first 2 arguments.
 
 ## Error message improvements: position hint
 
