@@ -212,6 +212,10 @@ Also accepted:
 `{!u}`
 `{style=underline}`
 
+Also accepted:
+
+`{style=underscored}`
+
 #### Blink
 
 `{!b}`
@@ -230,6 +234,8 @@ Also accepted:
 
 `{style=inverted}`
 `{style=invert}`
+`{style=inverse}`
+`{style=inversed}`
 `{style=reversed}`
 `{style=reverse}`
 
@@ -256,7 +262,7 @@ Also accepted:
 
 ## Multiple arguments
 
-Use `{@}` `{all}` to means "all the args", bash-style.
+Use `{@}` `{all}` to mean "all the args", bash-style.
 
 `cecho 'hello {%1} {@} {%1}' world foo`
 
@@ -381,7 +387,7 @@ tool that auto-color based on various criteria
 ### Alternatives?
 
 Alternatives: [zuncito](https://codeberg.org/lukaslauterbach/zuncito)
-a friendly C completing implementation.
+a friendly C competing implementation.
 
 TODO: is there anything that comes close to this?
 
@@ -405,7 +411,7 @@ https://gist.github.com/inexorabletash/9122583
 
 ## TODOs
 
-Slices for `{@}` `{@[2:]` sprints everything except the first 2 arguments.
+Slices for `{@}` `{@[2:]` prints everything except the first 2 arguments.
 
 ## Error message improvements: position hint
 

@@ -139,15 +139,15 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
                     "color" => {
                         push_style(&mut style, &mut styles);
                         mode = Some(ColorMode)
-                    },
+                    }
                     "index" => {
                         push_style(&mut style, &mut styles);
                         mode = Some(IndexMode)
-                    },
+                    }
                     "style" => {
                         push_style(&mut style, &mut styles);
                         mode = Some(StyleMode)
-                    },
+                    }
                     _ => panic!("Don't know how to interpret the keyword '{}' as a mode", last_word),
                 }
             _ => {
@@ -272,9 +272,9 @@ fn parse_style(styles: Vec<String>) -> Vec<Style> {
             "strong" | "s" | "bold" => vec!(Strong),
             "dim" | "d" | "faint" => vec!(Dim),
             "italic" | "i" => vec!(Italic),
-            "underline" | "u" => vec!(Underline),
+            "underline" | "u" | "underscored" => vec!(Underline),
             "blink" | "b" | "blinking" => vec!(Blink),
-            "reversed" | "r" | "reverse" | "invert" | "inverted" | "inverse" => vec!(Reversed),
+            "reversed" | "r" | "reverse" | "invert" | "inverted" | "inverse" | "inversed" => vec!(Reversed),
             "hidden" | "h" | "invisible" => vec!(Hidden),
             "crossed-out" | "c" | "strikethrough" | "strike" => vec!(CrossedOut),
             glued => {
@@ -284,7 +284,7 @@ fn parse_style(styles: Vec<String>) -> Vec<Style> {
 
                 // try to interpret it as individual chars
                 parse_style(glued.chars().map(|it| it.to_string()).collect())
-            },
+            }
         }
     ).collect()
 }
@@ -758,37 +758,49 @@ mod tests {
         let target_style = vec!(Strong, Hidden);
         parse_ok_spec(
             "!strong,hidden",
-            Part::positional_styles(target_style.clone())
+            Part::positional_styles(target_style.clone()),
         );
 
         parse_ok_spec(
             "!strong !hidden",
-            Part::positional_styles(target_style.clone())
+            Part::positional_styles(target_style.clone()),
         );
 
         parse_ok_spec(
             "style=strong,hidden",
-            Part::positional_styles(target_style.clone())
+            Part::positional_styles(target_style.clone()),
         );
 
         parse_ok_spec(
             "style=strong style=hidden",
-            Part::positional_styles(target_style.clone())
+            Part::positional_styles(target_style.clone()),
         );
 
         parse_ok_spec(
             "!sh",
-            Part::positional_styles(target_style.clone())
+            Part::positional_styles(target_style.clone()),
         );
 
         parse_ok_spec(
             "style=sh",
-            Part::positional_styles(target_style.clone())
+            Part::positional_styles(target_style.clone()),
         );
 
         parse_ok_spec(
             "!SH",
-            Part::positional_styles(target_style.clone())
+            Part::positional_styles(target_style.clone()),
         );
+    }
+
+    #[test]
+    fn corner_cases() {
+        parse_ok_spec(
+            "!inverse !underscored",
+            Specification {
+                text: Positional,
+                color: Colors::none(),
+                styles: vec!(Reversed, Underline),
+            },
+        )
     }
 }
