@@ -186,7 +186,7 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
 }
 
 fn push_style(mut style: &mut String, styles: &mut Vec<String>) {
-    if (!style.is_empty()) {
+    if !style.is_empty() {
         styles.push(style.clone());
         style.clear();
     }
@@ -676,9 +676,11 @@ mod tests {
     fn parse_underline_style() {
         parse_ok_spec("style=underline", Part::positional_style(Underline));
         parse_ok_spec("style=u", Part::positional_style(Underline));
+        parse_ok_spec("style=underscored", Part::positional_style(Underline));
 
         parse_ok_spec("!underline", Part::positional_style(Underline));
         parse_ok_spec("!u", Part::positional_style(Underline));
+        parse_ok_spec("!underscored", Part::positional_style(Underline));
     }
 
     #[test]
@@ -700,6 +702,7 @@ mod tests {
         parse_ok_spec("style=invert", Part::positional_style(Reversed));
         parse_ok_spec("style=inverted", Part::positional_style(Reversed));
         parse_ok_spec("style=inverse", Part::positional_style(Reversed));
+        parse_ok_spec("style=inversed", Part::positional_style(Reversed));
 
         parse_ok_spec("!reversed", Part::positional_style(Reversed));
         parse_ok_spec("!r", Part::positional_style(Reversed));
@@ -707,6 +710,7 @@ mod tests {
         parse_ok_spec("!invert", Part::positional_style(Reversed));
         parse_ok_spec("!inverted", Part::positional_style(Reversed));
         parse_ok_spec("!inverse", Part::positional_style(Reversed));
+        parse_ok_spec("!inversed", Part::positional_style(Reversed));
     }
 
     #[test]
@@ -790,17 +794,5 @@ mod tests {
             "!SH",
             Part::positional_styles(target_style.clone()),
         );
-    }
-
-    #[test]
-    fn corner_cases() {
-        parse_ok_spec(
-            "!inverse !underscored",
-            Specification {
-                text: Positional,
-                color: Colors::none(),
-                styles: vec!(Reversed, Underline),
-            },
-        )
     }
 }
