@@ -262,7 +262,7 @@ Also accepted:
 
 ## Multiple arguments
 
-Use `{@}` `{all}` to mean "all the args", bash-style.
+Use `{@}` to mean "all the args", bash-style.
 
 `cecho 'hello {%1} {@} {%1}' world foo`
 

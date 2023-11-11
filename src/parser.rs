@@ -6,7 +6,7 @@ use regex::{Match, Regex};
 use crate::model::{Color, Colors, Part, Style};
 use crate::model::Part::{Literal, Specification};
 use crate::model::Style::{Absent, Blink, Strong, Dim, Hidden, Reversed, Italic, CrossedOut, Underline};
-use crate::model::Text::{Indexed, Positional};
+use crate::model::Text::{AllArgs, Indexed, Positional};
 use crate::parser::ParserMode::{ColorMode, IndexMode, StyleMode};
 
 pub fn parse_format(format: &String) -> Result<Vec<Part>, String> {
@@ -118,6 +118,11 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
 
     for c in spec.chars() {
         match c {
+            '@' => {
+                push_style(&mut style, &mut styles);
+                text.push('@');
+                mode = None;
+            }
             '#' => {
                 push_style(&mut style, &mut styles);
                 mode = Some(ColorMode);
@@ -171,6 +176,7 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
     let style_spec = parse_style(styles);
     let text_spec = match text.trim() {
         "" => Positional,
+        "@" => AllArgs,
         _ => text.as_str().trim().parse::<usize>().and_then(|it| Ok(Indexed(it))).unwrap_or_else(|it|
             panic!("Don't know how to interpret the text specification '{}'", text)
         )
@@ -794,5 +800,13 @@ mod tests {
             "!SH",
             Part::positional_styles(target_style.clone()),
         );
+    }
+
+    #[test]
+    fn at_symbol_is_a_placeholder_that_means_all_the_args(){
+        parse_ok_spec(
+            "@",
+            Part::all_args()
+        )
     }
 }

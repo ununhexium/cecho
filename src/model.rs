@@ -1,6 +1,6 @@
 use crate::model::Color::{Byte, RGB};
 use crate::model::Part::{Literal, Specification};
-use crate::model::Text::{Indexed, Positional};
+use crate::model::Text::{AllArgs, Indexed, Positional};
 
 #[derive(PartialEq)]
 #[derive(Debug)]
@@ -19,6 +19,9 @@ impl Part {
     }
     pub fn positional() -> Self {
         Specification { text: Positional, color: Colors::none(), styles: vec!() }
+    }
+    pub fn all_args() -> Self {
+        Specification { text: AllArgs, color: Colors::none(), styles: vec!() }
     }
     pub fn positional_color(color: Color) -> Self {
         Specification { text: Positional, color: Colors::new_fg(color), styles: vec!() }
@@ -44,6 +47,7 @@ impl Part {
 pub enum Text {
     Positional,
     Indexed(usize),
+    AllArgs,
 }
 
 #[derive(PartialEq, Debug)]

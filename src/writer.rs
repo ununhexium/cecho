@@ -1,14 +1,15 @@
-use itertools::Itertools;
+use itertools::{Itertools, join};
+use regex::Replacer;
 
 use crate::model::Part;
 use crate::model::Part::{Literal, Specification};
-use crate::model::Text::{Indexed, Positional};
+use crate::model::Text::{AllArgs, Indexed, Positional};
 
 pub fn spec_to_ansi(inputs: &[String], specs: Vec<Part>) -> Result<String, String> {
     let mut position = 0;
     let mut result = specs.iter().map(|spec|
         match spec {
-            Literal(literal) => { literal.to_string() }
+            Literal(literal) => literal.to_string(),
             Specification { text: selector, color, styles: style } => {
                 let mut pre = String::new();
                 let mut post = String::new();
@@ -45,19 +46,24 @@ pub fn spec_to_ansi(inputs: &[String], specs: Vec<Part>) -> Result<String, Strin
                     pre.push_str("m");
                 });
 
-                let text = match selector {
+                let mut text = String::new();
+
+                match selector {
                     Indexed(i) => {
-                        &inputs[*i]
+                        text = text + &inputs[*i];
+                    }
+                    AllArgs => {
+                        text = text + &inputs.iter().dropping(1).join(" ");
                     }
                     Positional => {
                         position += 1;
-                        &inputs[position]
+                        text = text + &inputs[position];
                     }
                 };
 
                 let mut full = String::new();
                 full.push_str(&pre);
-                full.push_str(text);
+                full.push_str(text.as_str());
                 full.push_str(&post);
 
                 full
@@ -74,6 +80,7 @@ pub fn spec_to_ansi(inputs: &[String], specs: Vec<Part>) -> Result<String, Strin
 mod tests {
     use crate::model::{Color, Colors, Part};
     use crate::model::Style::{Blink, Strong};
+    use crate::model::Text::AllArgs;
     use crate::vecs;
     use crate::writer::spec_to_ansi;
 
@@ -191,6 +198,19 @@ mod tests {
                 Part::literal("##"),
             ),
             "##\x1b[48;2;84;55;15mPoop\x1b[0m##\x1b[0m",
+        );
+    }
+
+    #[test]
+    fn output_all_the_inputs() {
+        test_ok_spec_to_ansi(
+            vecs!("a", "b", "c"),
+            vec!(
+                Part::literal("##"),
+                Part::all_args(),
+                Part::literal("##"),
+            ),
+            "##a b c##\x1b[0m",
         );
     }
 }
