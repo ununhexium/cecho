@@ -63,7 +63,7 @@ mod tests {
     #[test]
     fn print_formatted_string_with_positional_arguments() {
         let actual = cecho(vecs!("{}+{}={}", "1", "2", "3"));
-        assert_eq!(actual.unwrap(), "1+2=3".to_string());
+        assert_eq!(actual.unwrap(), "1+2=3\x1b[0m".to_string());
     }
 
     #[test]
@@ -87,35 +87,35 @@ mod tests {
             "this will be ignored because the format contains no formatting specifier"
         );
         let actual = cecho(i);
-        assert_eq!(actual.ok(), Some(r#"Just raw text, nothing special, no placeholder like {}"#.to_string()));
+        assert_eq!(actual.ok(), Some("Just raw text, nothing special, no placeholder like {}\x1b[0m".to_string()));
     }
 
     #[test]
     fn when_a_format_is_specified_then_use_it_2_specs() {
         let i = vecs!("{} and {}", "A", "B");
         let actual = cecho(i);
-        assert_eq!(actual.ok(), Some("A and B".to_string()));
+        assert_eq!(actual.ok(), Some("A and B\x1b[0m".to_string()));
     }
 
     #[test]
     fn print_red() {
         let i = vecs!("{#r}", "red");
         let actual = cecho(i);
-        assert_eq!(actual.ok(), Some("\x1b[31mred\x1b[0m".to_string()));
+        assert_eq!(actual.ok(), Some("\x1b[31mred\x1b[0m\x1b[0m".to_string()));
     }
 
     #[test]
     fn print_green() {
         let i = vecs!("{#g}", "green");
         let actual = cecho(i);
-        assert_eq!(actual.ok(), Some("\x1b[32mgreen\x1b[0m".to_string()));
+        assert_eq!(actual.ok(), Some("\x1b[32mgreen\x1b[0m\x1b[0m".to_string()));
     }
 
     #[test]
     fn tolerate_missing_arguments_when_the_format_doesnt_contain_specs() {
         let i = vecs!(r#"\{}"#);
         let actual = cecho(i);
-        assert_eq!(actual.ok(), Some("{}".to_string()));
+        assert_eq!(actual.ok(), Some("{}\x1b[0m".to_string()));
     }
 
     #[test]

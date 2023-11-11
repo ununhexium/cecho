@@ -411,7 +411,10 @@ https://gist.github.com/inexorabletash/9122583
 
 ## TODOs
 
-Slices for `{@}` `{@[2:]` prints everything except the first 2 arguments.
+% everything
+%x single index
+%x:y range
+%: same as %
 
 ## Error message improvements: position hint
 

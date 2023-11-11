@@ -6,7 +6,7 @@ use crate::model::Text::{Indexed, Positional};
 
 pub fn spec_to_ansi(inputs: &[String], specs: Vec<Part>) -> Result<String, String> {
     let mut position = 0;
-    let result = specs.iter().map(|spec|
+    let mut result = specs.iter().map(|spec|
         match spec {
             Literal(literal) => { literal.to_string() }
             Specification { text: selector, color, styles: style } => {
@@ -39,7 +39,6 @@ pub fn spec_to_ansi(inputs: &[String], specs: Vec<Part>) -> Result<String, Strin
                 }
 
                 color.background.as_ref().map(|fg| {
-
                     pre.push_str("\x1b[");
                     let c = fg.as_ansi_background_escape_code();
                     pre.push_str(&c);
@@ -65,6 +64,9 @@ pub fn spec_to_ansi(inputs: &[String], specs: Vec<Part>) -> Result<String, Strin
             }
         }
     ).join("");
+
+    result.push_str("\x1b[0m");
+
     Ok(result)
 }
 
@@ -83,6 +85,19 @@ mod tests {
     }
 
     #[test]
+    fn always_reset_the_style() {
+        test_ok_spec_to_ansi(
+            vecs!("default"),
+            vec!(
+                Part::literal("##"),
+                Part::literal("default"),
+                Part::literal("##"),
+            ),
+            "##default##\x1b[0m",
+        )
+    }
+
+    #[test]
     fn output_escape_sequence_for_red_string_surrounded_by_hashes() {
         test_ok_spec_to_ansi(
             vecs!("red"),
@@ -91,7 +106,7 @@ mod tests {
                 Part::indexed_color(1, Colors::new_fg(Color::red())),
                 Part::literal("##"),
             ),
-            "##\x1b[31mred\x1b[0m##",
+            "##\x1b[31mred\x1b[0m##\x1b[0m",
         )
     }
 
@@ -104,7 +119,7 @@ mod tests {
                 Part::indexed_color(1, Colors::new_fg(Color::green())),
                 Part::literal("##"),
             ),
-            "##\x1b[32mgreen\x1b[0m##",
+            "##\x1b[32mgreen\x1b[0m##\x1b[0m",
         )
     }
 
@@ -123,7 +138,8 @@ mod tests {
                 ),
                 Part::literal("##"),
             ),
-            "##\x1b[33m\x1b[41mDANGER\x1b[0m##");
+            "##\x1b[33m\x1b[41mDANGER\x1b[0m##\x1b[0m",
+        );
     }
 
     #[test]
@@ -135,7 +151,8 @@ mod tests {
                 Part::positional_style(Strong),
                 Part::literal("##"),
             ),
-            "##\x1b[1mBald\x1b[0m##");
+            "##\x1b[1mBald\x1b[0m##\x1b[0m",
+        );
     }
 
     #[test]
@@ -147,7 +164,8 @@ mod tests {
                 Part::positional_style(Blink),
                 Part::literal("##"),
             ),
-            "##\x1b[5mTikTok\x1b[0m##");
+            "##\x1b[5mTikTok\x1b[0m##\x1b[0m",
+        );
     }
 
     #[test]
@@ -156,10 +174,11 @@ mod tests {
             vecs!("Poop"),
             vec!(
                 Part::literal("##"),
-                Part::positional_color(Color::rgb(84,55,15)),
+                Part::positional_color(Color::rgb(84, 55, 15)),
                 Part::literal("##"),
             ),
-            "##\x1b[38;2;84;55;15mPoop\x1b[0m##");
+            "##\x1b[38;2;84;55;15mPoop\x1b[0m##\x1b[0m",
+        );
     }
 
     #[test]
@@ -168,10 +187,10 @@ mod tests {
             vecs!("Poop"),
             vec!(
                 Part::literal("##"),
-                Part::positional_background_color(Color::rgb(84,55,15)),
+                Part::positional_background_color(Color::rgb(84, 55, 15)),
                 Part::literal("##"),
             ),
-            "##\x1b[48;2;84;55;15mPoop\x1b[0m##");
+            "##\x1b[48;2;84;55;15mPoop\x1b[0m##\x1b[0m",
+        );
     }
-
 }
