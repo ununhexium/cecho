@@ -21,7 +21,10 @@ impl Part {
         Specification { text: Positional, color: Colors::none(), styles: vec!() }
     }
     pub fn all_args() -> Self {
-        Specification { text: AllArgs, color: Colors::none(), styles: vec!() }
+        Specification { text: AllArgs(" ".to_string()), color: Colors::none(), styles: vec!() }
+    }
+    pub fn all_args_custom_separator(separator: &str) -> Self {
+        Specification { text: AllArgs(separator.to_string()), color: Colors::none(), styles: vec!() }
     }
     pub fn positional_color(color: Color) -> Self {
         Specification { text: Positional, color: Colors::new_fg(color), styles: vec!() }
@@ -47,7 +50,7 @@ impl Part {
 pub enum Text {
     Positional,
     Indexed(usize),
-    AllArgs,
+    AllArgs(String),
 }
 
 #[derive(PartialEq, Debug)]

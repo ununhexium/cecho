@@ -52,8 +52,8 @@ pub fn spec_to_ansi(inputs: &[String], specs: Vec<Part>) -> Result<String, Strin
                     Indexed(i) => {
                         text = text + &inputs[*i];
                     }
-                    AllArgs => {
-                        text = text + &inputs.iter().dropping(1).join(" ");
+                    AllArgs(sep) => {
+                        text = text + &inputs.iter().dropping(1).join(sep);
                     }
                     Positional => {
                         position += 1;
@@ -211,6 +211,19 @@ mod tests {
                 Part::literal("##"),
             ),
             "##a b c##\x1b[0m",
+        );
+    }
+
+    #[test]
+    fn output_all_the_inputs_with_custom_separator() {
+        test_ok_spec_to_ansi(
+            vecs!("a", "b", "c"),
+            vec!(
+                Part::literal("##"),
+                Part::all_args_custom_separator("|"),
+                Part::literal("##"),
+            ),
+            "##a|b|c##\x1b[0m",
         );
     }
 }

@@ -3,12 +3,18 @@ use std::str::Chars;
 use lazy_static::lazy_static;
 use regex::{Match, Regex};
 
-use crate::model::{Color, Colors, Part, Style};
+use crate::model::{Color, Colors, Part, Style, Text};
 use crate::model::Part::{Literal, Specification};
 use crate::model::Style::{Absent, Blink, Strong, Dim, Hidden, Reversed, Italic, CrossedOut, Underline};
 use crate::model::Text::{AllArgs, Indexed, Positional};
-use crate::parser::ParserMode::{ColorMode, IndexMode, StyleMode};
+use crate::parser::ParserMode::{AllArgsMode, ColorMode, IndexMode, StyleMode};
 
+lazy_static! {
+    static ref HEX_COLOR : Regex = Regex::new(r#"^(?<code>[[:xdigit:]]{6})$"#).unwrap();
+    static ref DEC_COLOR : Regex = Regex::new(r#"^(?<rgb>rgb\((?<red>[[:digit:]]{1,3}),(?<green>[[:digit:]]{1,3}),(?<blue>[[:digit:]]{1,3})\))$"#).unwrap();
+    static ref COLOR_PARTS_REGEX : Regex = Regex::new("^\\s*(?<fg>[^/]+)?\\s*(/\\s*(?<bg>.+))?\\s*$").unwrap();
+    static ref ALL_ARGS_REGEX : Regex = Regex::new("^@\\|(?<separator>.*)\\|$").unwrap();
+}
 pub fn parse_format(format: &String) -> Result<Vec<Part>, String> {
     return parse_format_in_default_mode(&mut format.chars());
 }
@@ -99,6 +105,7 @@ fn parse_format_in_spec_mode<'a, 'b>(chars: &mut Chars) -> Result<Part, String> 
 #[derive(Copy, Clone)]
 enum ParserMode {
     IndexMode,
+    AllArgsMode,
     ColorMode,
     StyleMode,
 }
@@ -121,7 +128,7 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
             '@' => {
                 push_style(&mut style, &mut styles);
                 text.push('@');
-                mode = None;
+                mode = Some(AllArgsMode);
             }
             '#' => {
                 push_style(&mut style, &mut styles);
@@ -161,6 +168,7 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
                 match mode {
                     Some(m) => match m {
                         IndexMode => text.push(c),
+                        AllArgsMode => text.push(c),
                         ColorMode => color.push(c),
                         StyleMode => style.push(c),
                     },
@@ -174,12 +182,30 @@ fn parse_spec(spec: &str) -> Result<Part, String> {
 
     let color_spec: Option<Colors> = parse_color(&color.as_str());
     let style_spec = parse_style(styles);
-    let text_spec = match text.trim() {
-        "" => Positional,
-        "@" => AllArgs,
-        _ => text.as_str().trim().parse::<usize>().and_then(|it| Ok(Indexed(it))).unwrap_or_else(|it|
-            panic!("Don't know how to interpret the text specification '{}'", text)
-        )
+
+    let trimmed = text.trim();
+
+    let text_spec: Text = if trimmed.is_empty() {
+        Positional
+    } else {
+        match trimmed.chars().nth(0) {
+            Some('@') => {
+                ALL_ARGS_REGEX.captures(text.trim()).and_then(|separator| {
+                    let sep = separator.name("separator");
+                    sep.map(|s| AllArgs(s.as_str().replace("\\|", "|")))
+                }).unwrap_or_else(|| AllArgs(" ".to_string()))
+            }
+            _ => {
+                text
+                    .as_str()
+                    .trim()
+                    .parse::<usize>()
+                    .and_then(|it| Ok(Indexed(it)))
+                    .unwrap_or_else(|it|
+                        panic!("Don't know how to interpret the text specification '{}'", text)
+                    )
+            }
+        }
     };
 
     Ok(
@@ -198,21 +224,12 @@ fn push_style(mut style: &mut String, styles: &mut Vec<String>) {
     }
 }
 
-lazy_static! {
-    static ref COLOR_PARTS_REGEX : Regex = Regex::new("^\\s*(?<fg>[^/]+)?\\s*(/\\s*(?<bg>.+))?\\s*$").unwrap();
-}
-
 fn parse_color(so_far: &str) -> Option<Colors> {
     COLOR_PARTS_REGEX.captures(so_far.trim()).map(|color| {
         let foreground = color.name("fg").map(|s| { interpret_color(s) });
         let background = color.name("bg").map(|s| { interpret_color(s) });
         Colors { foreground, background }
     })
-}
-
-lazy_static! {
-    static ref HEX_COLOR : Regex = Regex::new(r#"^(?<code>[[:xdigit:]]{6})$"#).unwrap();
-    static ref DEC_COLOR : Regex = Regex::new(r#"^(?<rgb>rgb\((?<red>[[:digit:]]{1,3}),(?<green>[[:digit:]]{1,3}),(?<blue>[[:digit:]]{1,3})\))$"#).unwrap();
 }
 
 fn interpret_color(s: Match) -> Color {
@@ -803,10 +820,30 @@ mod tests {
     }
 
     #[test]
-    fn at_symbol_is_a_placeholder_that_means_all_the_args(){
+    fn at_symbol_is_a_placeholder_that_means_all_the_args() {
         parse_ok_spec(
             "@",
-            Part::all_args()
+            Part::all_args(),
+        )
+    }
+
+    #[test]
+    fn at_symbol_accepts_a_custom_separator() {
+        parse_ok_spec(
+            "@|,.\\||",
+            Part::all_args_custom_separator(",.|"),
+        )
+    }
+
+    #[test]
+    fn whitespace_inside_specifier_is_ignored() {
+        test_ok_format(
+            "{}{ }{  }",
+            vec!(
+                Part::positional(),
+                Part::positional(),
+                Part::positional(),
+            ),
         )
     }
 }
